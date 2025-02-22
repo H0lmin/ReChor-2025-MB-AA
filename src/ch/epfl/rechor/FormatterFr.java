@@ -12,13 +12,12 @@ import java.time.temporal.ChronoField;
 /**
  * Utility class for formatting various journey-related information in French.
  * This class provides methods to format durations, times, stop platform names, and journey legs in French.
- *
+ * <p>
  * The class cannot be instantiated.
  */
 public final class FormatterFr {
 
     private FormatterFr() {
-        throw new UnsupportedOperationException("Uninstanciable class");
     }
 
     /**

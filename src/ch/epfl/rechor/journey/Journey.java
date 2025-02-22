@@ -23,7 +23,7 @@ public record Journey(List<Leg> legs) {
         /**
          * Represents an intermediate stop during a transport or foot journey.
          */
-        record IntermediateStop(Stop stop, LocalDateTime arrTime, LocalDateTime depTime) {
+        record IntermediateStop(Stop stop, LocalDateTime arrTime, LocalDateTime depTime) implements Leg{
 
             /**
              * Creates an IntermediateStop.
@@ -37,6 +37,21 @@ public record Journey(List<Leg> legs) {
             public IntermediateStop {
                 requireNonNull(stop, "The stop cannot be null.");
                 checkArgument(!depTime.isBefore(arrTime));
+            }
+
+            @Override
+            public Stop depStop() {
+                return null;
+            }
+
+            @Override
+            public Stop arrStop() {
+                return null;
+            }
+
+            @Override
+            public List<IntermediateStop> intermediateStops() {
+                return List.of();
             }
         }
 
