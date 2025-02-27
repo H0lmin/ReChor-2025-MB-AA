@@ -100,7 +100,7 @@ public final class IcalBuilder {
      */
     public IcalBuilder begin(Component component) {
         componentsInProgress.add(component);
-        calendarContent.append("BEGIN: ").append(component.name()).append("\n");
+        calendarContent.append("BEGIN:").append(component.name()).append("\n");
         return this;
     }
 
@@ -113,7 +113,7 @@ public final class IcalBuilder {
     public IcalBuilder end() {
         checkArgument(!componentsInProgress.isEmpty());
         Component component = componentsInProgress.removeLast();
-        calendarContent.append("END: ").append(component.name()).append("\n");
+        calendarContent.append("END:").append(component.name()).append("\n");
         return this;
     }
 
