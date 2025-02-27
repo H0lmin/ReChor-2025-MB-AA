@@ -35,8 +35,8 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException if the arrival time or changes are out of range
      */
     public static long pack(int arrMins, int changes, int payload) {
-        checkArgument(arrMins < -TIME_TRANSLATION || arrMins >= 2880);
-        checkArgument(changes < 0 || changes >= 128);
+        checkArgument(arrMins >= -TIME_TRANSLATION && arrMins < 2880);
+        checkArgument(changes >= 0 && changes < 128);
 
         // Translate arrival minutes so that -240 becomes 0.
         int arrTranslated = arrMins + TIME_TRANSLATION;  // valid range: 0 .. 3119 (fits in 12 bits)
@@ -69,7 +69,7 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException if the criteria do not include a departure time
      */
     public static int depMins(long criteria) {
-        checkArgument(!hasDepMins(criteria));
+        checkArgument(hasDepMins(criteria));
 
         int storedDep = (int) ((criteria >>> DEP_SHIFT) & DEP_MASK);
         // Convert back: actual departure minutes = (MAX_STORED_TIME - storedDep) - TIME_TRANSLATION.
@@ -108,7 +108,7 @@ public final class PackedCriteria {
     }
 
     /**
-     * Returns true if and only if the first set of packed criteria dominates or is equal to the second.
+     * Returns true if the first set of packed criteria dominates or is equal to the second.
      * Domination (or equality) is defined component-wise. Note that both criteria must either include
      * a departure time or not.
      * <p>
@@ -125,26 +125,16 @@ public final class PackedCriteria {
      * @throws IllegalArgumentException if one criterion includes a departure time and the other does not
      */
     public static boolean dominatesOrIsEqual(long criteria1, long criteria2) {
-        boolean hasDep1 = hasDepMins(criteria1);
-        boolean hasDep2 = hasDepMins(criteria2);
+        checkArgument(hasDepMins(criteria1) == hasDepMins(criteria2));
 
-        checkArgument(hasDep1 != hasDep2);
-
-        if (hasDep1) {
-            long dep1 = (criteria1 >>> DEP_SHIFT) & DEP_MASK;
-            long dep2 = (criteria2 >>> DEP_SHIFT) & DEP_MASK;
-            if (dep1 > dep2) { // Remember: lower stored departure means a later (better) departure.
-                return false;
-            }
+        if (hasDepMins(criteria1)){
+            return (depMins(criteria1) >= depMins(criteria2)) && arrMins(criteria1) <= arrMins(criteria2) &&
+                    changes(criteria1) <= changes(criteria2);
+        } else {
+            return arrMins(criteria1) <= arrMins(criteria2) && changes(criteria1) <= changes(criteria2);
         }
-
-        long arr1 = (criteria1 >>> ARR_SHIFT) & ARR_MASK;
-        long arr2 = (criteria2 >>> ARR_SHIFT) & ARR_MASK;
-        long chg1 = (criteria1 >>> CHG_SHIFT) & CHG_MASK;
-        long chg2 = (criteria2 >>> CHG_SHIFT) & CHG_MASK;
-
-        return arr1 <= arr2 && chg1 <= chg2;
     }
+
 
     /**
      * Returns packed criteria identical to the given ones but with no departure time.
@@ -163,10 +153,8 @@ public final class PackedCriteria {
      * @param criteria the original packed criteria
      * @param depMins1 the new departure time in minutes since midnight; must be in [-240, 2880)
      * @return the criteria with the updated departure time
-     * @throws IllegalArgumentException if the provided departure time is out of range
      */
     public static long withDepMins(long criteria, int depMins1) {
-        checkArgument(depMins1 < -TIME_TRANSLATION || depMins1 >= 2880);
 
         // Compute stored departure as the complement relative to MAX_STORED_TIME.
         int storedDep = MAX_STORED_TIME - (depMins1 + TIME_TRANSLATION);
@@ -182,7 +170,6 @@ public final class PackedCriteria {
      */
     public static long withAdditionalChange(long criteria) {
         int currentChanges = changes(criteria);
-        checkArgument(currentChanges >= 127);
 
         int newChanges = currentChanges + 1;
         return (criteria & ~(CHG_MASK << CHG_SHIFT)) | (((long) newChanges & CHG_MASK) << CHG_SHIFT);

@@ -21,7 +21,7 @@ public record Stop(String name, String platformName, double longitude, double la
      * @throws IllegalArgumentException if longitude or latitude are out of bounds.
      */
     public Stop{
-        Objects.requireNonNull(name, "The name cannot be null.");
+        Objects.requireNonNull(name);
 
         checkArgument(longitude >= -180.0 && longitude <= 180.0);
         checkArgument(latitude >= -90.0 && latitude <= 90.0);

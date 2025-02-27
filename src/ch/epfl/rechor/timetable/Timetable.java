@@ -2,7 +2,7 @@ package ch.epfl.rechor.timetable;
 
 import java.time.LocalDate;
 
-public interface Timetable {
+public interface TimeTable {
 
     /**
      * @return all indexed stations in this timetable.
@@ -74,7 +74,7 @@ public interface Timetable {
      * <p>
      * If the stop is already a station (i.e., {@link #isStationId(int)} is {@code true}),
      * then this method simply returns {@code stopId}. Otherwise, it retrieves the station
-     * ID associated with the platform via {@code platforms().stationID(stopId)}.
+     * ID associated with the platform via {@code platforms().stationId(stopId)}.
      *
      * @param stopId the ID of the stop
      * @return the station ID associated with the stop
@@ -83,7 +83,7 @@ public interface Timetable {
         if (isStationId(stopId)) {
             return stopId;
         } else {
-            return platforms().stationID(stopId);
+            return platforms().stationId(stopId);
         }
     }
 

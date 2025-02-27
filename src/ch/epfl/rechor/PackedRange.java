@@ -1,30 +1,26 @@
 package ch.epfl.rechor;
 
+import static ch.epfl.rechor.Preconditions.checkArgument;
+
 public class PackedRange {
-    private PackedRange() {
+    private PackedRange(){
     }
 
-    public static int pack(int startInclusive, int endExclusive) {
-        int length = endExclusive - startInclusive;
+    public static int pack (int startInclusive, int endExclusive){
+        checkArgument((startInclusive >>> 24) == 0 && (endExclusive - startInclusive) >>> 8 == 0);
 
-        if ((startInclusive & 0xFF000000) != 0) {
-            throw new IllegalArgumentException("The lower bound must be represented using 24 bits.");
-        } else if (length < 0 || length > 255) {
-            throw new IllegalArgumentException("The length must be between 0 and 255.");
-        }
-
-        return (startInclusive << 8) | length;
+        return Bits32_24_8.pack(startInclusive, endExclusive - startInclusive);
     }
 
-    public static int length(int interval) {
+    public static int length(int interval){
         return interval & 0xFF;
     }
 
-    public static int startInclusive(int interval) {
-        return (interval >>> 8) & 0xFFFFFF;
+    public static int startInclusive(int interval){
+        return interval >>> 8;
     }
 
-    public static int endExclusive(int interval) {
+    public static int endExclusive (int interval){
         return startInclusive(interval) + length(interval);
     }
 }

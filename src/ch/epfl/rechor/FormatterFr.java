@@ -59,10 +59,11 @@ public final class FormatterFr {
      * @return The formatted platform name, or an empty string if there is no platform name.
      */
     public static String formatPlatformName(Stop stop) {
-        if (stop == null || stop.platformName() == null || stop.platformName().isEmpty()) {
+        String platformName = stop.platformName();
+
+        if (stop.platformName() == null || stop.platformName().isEmpty()) {
             return "";
         }
-        String platformName = stop.platformName();
         return Character.isDigit(platformName.charAt(0)) ? "voie " + platformName : "quai " + platformName;
     }
 

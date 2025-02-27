@@ -18,5 +18,5 @@ public interface Platforms extends Indexed {
      * @return the station index corresponding to the given track/platform index
      * @throws IndexOutOfBoundsException if id < 0 or id >= size()
      */
-    int stationID(int id);
+    int stationId(int id);
 }
