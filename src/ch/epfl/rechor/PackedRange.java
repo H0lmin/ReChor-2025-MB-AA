@@ -8,16 +8,15 @@ public class PackedRange {
 
     public static int pack (int startInclusive, int endExclusive){
         checkArgument((startInclusive >>> 24) == 0 && (endExclusive - startInclusive) >>> 8 == 0);
-
         return Bits32_24_8.pack(startInclusive, endExclusive - startInclusive);
     }
 
     public static int length(int interval){
-        return interval & 0xFF;
+        return Bits32_24_8.unpack8(interval);
     }
 
     public static int startInclusive(int interval){
-        return interval >>> 8;
+        return Bits32_24_8.unpack24(interval);
     }
 
     public static int endExclusive (int interval){

@@ -66,7 +66,7 @@ public interface TimeTable {
      * @return {@code true} if {@code stopId} is a platform/track ID; {@code false} otherwise
      */
     default boolean isPlatformId(int stopId) {
-        return stopId >= 0 && stopId >= stations().size() && stopId < platforms().size();
+        return stopId >= 0 && stopId >= stations().size() && stopId < (stations().size() + platforms().size());
     }
 
     /**
@@ -80,11 +80,7 @@ public interface TimeTable {
      * @return the station ID associated with the stop
      */
     default int stationId(int stopId) {
-        if (isStationId(stopId)) {
-            return stopId;
-        } else {
-            return platforms().stationId(stopId);
-        }
+        return isStationId(stopId) ? stopId : platforms().stationId(stopId - stations().size());
     }
 
     /**
@@ -95,10 +91,6 @@ public interface TimeTable {
      * @return the name of the platform, or {@code null} if this stop is a station
      */
     default String platformName(int stopId) {
-        if (isPlatformId(stopId)) {
-            return platforms().name(stopId);
-        } else {
-            return null;
-        }
+        return isPlatformId(stopId) ? platforms().name(stopId - stations().size()) : null;
     }
 }

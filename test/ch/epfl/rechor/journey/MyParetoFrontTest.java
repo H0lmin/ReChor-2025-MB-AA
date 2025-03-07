@@ -358,6 +358,9 @@ public class MyParetoFrontTest {
         // Dominated tuple has fewer changes (0) making it better.
         dominated.add(PackedCriteria.pack(600, 0, 10));
 
+        System.out.println(dominated);
+        System.out.println(dominating);
+
         assertFalse(dominating.fullyDominates(dominated, DEP_MINS));
     }
 

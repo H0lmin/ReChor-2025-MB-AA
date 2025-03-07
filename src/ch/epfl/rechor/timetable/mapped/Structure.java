@@ -4,7 +4,6 @@ import static ch.epfl.rechor.Preconditions.checkArgument;
 
 public final class Structure {
 
-    private final Field[] fields;
     private final int[] fieldOffsets;
     private final int totalSize;
 
@@ -13,7 +12,6 @@ public final class Structure {
         for (int i = 0; i < fields.length; i++) {
             checkArgument(fields[i].index() == i);
         }
-        this.fields = fields.clone();
 
         this.fieldOffsets = new int[fields.length];
         int offset = 0;

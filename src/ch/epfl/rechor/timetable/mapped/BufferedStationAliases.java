@@ -25,12 +25,18 @@ public final class BufferedStationAliases implements StationAliases {
 
     @Override
     public String alias(int id) {
+        if (id < 0 || id >= size()) {
+            throw new IndexOutOfBoundsException("The id isn't valid");
+        }
         int stringIndex = buffer.getU16(ALIAS_ID, id);
         return stringTable.get(stringIndex);
     }
 
     @Override
     public String stationName(int id) {
+        if (id < 0 || id >= size()) {
+            throw new IndexOutOfBoundsException("The id isn't valid");
+        }
         int stringIndex = buffer.getU16(STATION_NAME_ID, id);
         return stringTable.get(stringIndex);
     }
