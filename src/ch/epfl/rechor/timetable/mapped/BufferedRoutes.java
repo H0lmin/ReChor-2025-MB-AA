@@ -1,37 +1,50 @@
 package ch.epfl.rechor.timetable.mapped;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-
 import ch.epfl.rechor.journey.Vehicle;
 import ch.epfl.rechor.timetable.Routes;
 
+import java.nio.ByteBuffer;
+import java.util.List;
+
 import static ch.epfl.rechor.journey.Vehicle.ALL;
 
-public final class BufferedRoutes implements Routes {
+public class BufferedRoutes implements Routes {
+    private final static int NAME_ID = 0;
+    private final static int KIND = 1;
+    private final static Structure ROUTES_STRUCTURE = new Structure(
+            Structure.field(0, Structure.FieldType.U16),
+            Structure.field(1, Structure.FieldType.U8)
+    );
     private final List<String> stringTable;
-    private final ByteBuffer buffer;
+    private final StructuredBuffer buffer;
 
     public BufferedRoutes(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = List.copyOf(stringTable);
-        this.buffer = buffer.duplicate().asReadOnlyBuffer();
-    }
-    @Override
-    public Vehicle vehicle(int id){
-        int offset = buffer.getInt(4 + id * 4);
-        byte b = buffer.get(offset);
-        return ALL.get(b);
+        this.buffer = new StructuredBuffer(ROUTES_STRUCTURE, buffer);
     }
 
     @Override
-    public String name(int id){
-        int offset = buffer.getInt(4 + id * 4);
-        return stringTable.get(offset);
+    public int size() {
+        return buffer.size();
     }
 
     @Override
-    public int size(){
-        return stringTable.size();
+    public Vehicle vehicle(int id) {
+        checkIndex(id);
+        int kind = buffer.getU8(1, id);
+        return ALL.get(kind);
     }
 
+    @Override
+    public String name(int id) {
+        checkIndex(id);
+        int nameIndex = buffer.getU16(0, id);
+        return stringTable.get(nameIndex);
+    }
+
+    private void checkIndex(int id) {
+        if (id < 0 || id >= size()) {
+            throw new IndexOutOfBoundsException("The id isn't valid ");
+        }
+    }
 }

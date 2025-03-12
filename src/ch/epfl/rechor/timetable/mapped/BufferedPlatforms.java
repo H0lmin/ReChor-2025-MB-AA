@@ -25,23 +25,25 @@ public final class BufferedPlatforms implements Platforms {
 
     @Override
     public String name(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid");
-        }
+        checkIndex(id);
         int stringIndex = buffer.getU16(NAME_ID, id);
         return stringTable.get(stringIndex);
     }
 
     @Override
     public int stationId(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid");
-        }
+        checkIndex(id);
         return buffer.getU16(STATION_ID, id);
     }
 
     @Override
     public int size() {
         return buffer.size();
+    }
+
+    private void checkIndex(int id) {
+        if (id < 0 || id >= size()) {
+            throw new IndexOutOfBoundsException("The id isn't valid ");
+        }
     }
 }

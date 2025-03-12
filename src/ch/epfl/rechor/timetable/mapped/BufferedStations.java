@@ -10,15 +10,18 @@ import static java.lang.Math.scalb;
 public final class BufferedStations implements Stations {
 
     private static final double UNIT_TO_DEGREES = scalb(360, -32);
+
     private static final int NAME_ID = 0;
     private static final int LON = 1;
     private static final int LAT = 2;
+
     private static final Structure STATION_STRUCTURE =
             new Structure(
                     Structure.field(0, Structure.FieldType.U16),
                     Structure.field(1, Structure.FieldType.S32),
                     Structure.field(2, Structure.FieldType.S32)
             );
+
     private final List<String> stringTable;
     private final StructuredBuffer buffer;
 
@@ -30,18 +33,14 @@ public final class BufferedStations implements Stations {
 
     @Override
     public String name(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid");
-        }
+        checkIndex(id);
         int stringIndex = buffer.getU16(NAME_ID, id);
         return stringTable.get(stringIndex);
     }
 
     @Override
     public double longitude(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid");
-        }
+        checkIndex(id);
         int rawLongitude = buffer.getS32(LON, id);
         return rawLongitude * UNIT_TO_DEGREES;
     }
@@ -49,9 +48,7 @@ public final class BufferedStations implements Stations {
 
     @Override
     public double latitude(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid");
-        }
+        checkIndex(id);
         int rawLatitude = buffer.getS32(LAT, id);
         return rawLatitude * UNIT_TO_DEGREES;
     }
@@ -59,5 +56,11 @@ public final class BufferedStations implements Stations {
     @Override
     public int size() {
         return buffer.size();
+    }
+
+    private void checkIndex(int id) {
+        if (id < 0 || id >= size()) {
+            throw new IndexOutOfBoundsException("The id isn't valid ");
+        }
     }
 }
