@@ -6,12 +6,16 @@ import java.util.List;
 import ch.epfl.rechor.timetable.Trips;
 
 public class BufferedTrips implements Trips {
+
+    private final static int ROUTE_ID = 0;
+    private final static int DESTINATION_ID = 1;
+
     private final List<String> stringTable;
     private final StructuredBuffer buffer;
 
     private final static Structure TRIPS_STRUCTURE = new Structure(
-            Structure.field(0, Structure.FieldType.U16),
-            Structure.field(1, Structure.FieldType.U16)
+            Structure.field(ROUTE_ID, Structure.FieldType.U16),
+            Structure.field(DESTINATION_ID, Structure.FieldType.U16)
     );
 
     public BufferedTrips(List<String> stringTable, ByteBuffer buffer) {
@@ -23,13 +27,13 @@ public class BufferedTrips implements Trips {
     @Override
     public int routeId(int id){
         checkIndex(id);
-        return buffer.getU16(0, id);
+        return buffer.getU16(ROUTE_ID, id);
     }
 
     @Override
     public String destination(int id){
         checkIndex(id);
-        int destinationId = buffer.getU16(1, id);
+        int destinationId = buffer.getU16(DESTINATION_ID, id);
         return stringTable.get(destinationId);
     }
 

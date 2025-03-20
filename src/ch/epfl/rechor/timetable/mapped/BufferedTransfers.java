@@ -9,48 +9,49 @@ import java.util.NoSuchElementException;
 
 public class BufferedTransfers implements Transfers {
 
+    private final static int DEP_STATION_ID = 0;
+    private final static int ARR_STATION_ID = 1;
+    private final static int TRANSFER_MINUTES = 2;
+
     private final StructuredBuffer structuredBuffer;
     private final int[] arrivingAtTable;
 
     private static final Structure TRANSFERS_STRUCTURE = new Structure(
-            Structure.field(0, Structure.FieldType.U16),
-            Structure.field(1, Structure.FieldType.U16),
-            Structure.field(2, Structure.FieldType.U8)
+            Structure.field(DEP_STATION_ID, Structure.FieldType.U16),
+            Structure.field(ARR_STATION_ID, Structure.FieldType.U16),
+            Structure.field(TRANSFER_MINUTES, Structure.FieldType.U8)
     );
 
-    public BufferedTransfers (ByteBuffer buffer){
+    public BufferedTransfers(ByteBuffer buffer) {
         structuredBuffer = new StructuredBuffer(TRANSFERS_STRUCTURE, buffer);
         int n = structuredBuffer.size();
 
-        if (n == 0){
-            arrivingAtTable = new int[0];
-        } else {
-            int maxArrivalStation = structuredBuffer.getU16(1, n - 1);
-            arrivingAtTable = new int[maxArrivalStation + 1];
-
-            int i = 0;
-            while (i < n){
-                int station = structuredBuffer.getU16(1, i);
-                int start = i;
-                while (i < n && structuredBuffer.getU16(1, i) == station){
-                    i++;
-                }
-                int count = i - start;
-                arrivingAtTable[station] = Bits32_24_8.pack(start, count);
+        arrivingAtTable = new int[n == 0 ? 0 : (arrStationId(n-1) + 1)];
+        for (int i = 0; i < n; ) {
+            int station = arrStationId(i);
+            int start = i;
+            while (i < n && arrStationId(i) == station) {
+                i++;
             }
+            arrivingAtTable[station] = Bits32_24_8.pack(start, i - start);
         }
-
     }
+
+    private int arrStationId(int id) {
+        checkIndex(id);
+        return structuredBuffer.getU16(ARR_STATION_ID, id);
+    }
+
     @Override
     public int depStationId(int id) {
         checkIndex(id);
-        return structuredBuffer.getU16(0, id);
+        return structuredBuffer.getU16(DEP_STATION_ID, id);
     }
 
     @Override
     public int minutes(int id) {
         checkIndex(id);
-        return structuredBuffer.getU8(2, id);
+        return structuredBuffer.getU8(TRANSFER_MINUTES, id);
     }
 
     @Override
@@ -65,7 +66,6 @@ public class BufferedTransfers implements Transfers {
     public int minutesBetween(int depStationId, int arrStationId) {
 
         int interval = arrivingAt(arrStationId);
-
         if (interval == 0){
             throw new NoSuchElementException("No transfer found between stations "
                     + depStationId + " and " + arrStationId);
@@ -73,14 +73,12 @@ public class BufferedTransfers implements Transfers {
 
         int start = PackedRange.startInclusive(interval);
         int end = PackedRange.endExclusive(interval);
-
         for (int i = start; i < end; i++){
             if(depStationId(i) == depStationId)
                 return minutes(i);
         }
 
-        throw new NoSuchElementException("No transfer found between stations "
-                + depStationId + " and " + arrStationId);
+        throw new NoSuchElementException("No transfer found between stations " + depStationId + " and " + arrStationId);
     }
 
     @Override

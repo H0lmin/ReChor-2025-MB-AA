@@ -37,7 +37,6 @@ class ParetoFrontTest {
         }
 
         var f3d = b3d.build();
-        System.out.println(f3d);
         for (var i = 0; i < 20; i += 1) {
             var depMins = i - 10;
             var arrMins = 10 + i;
@@ -55,7 +54,6 @@ class ParetoFrontTest {
         for (var i = 0; i < 20; i += 1)
             b2d.add(PackedCriteria.pack(10 + i, 127 - i, i));
 
-        System.out.println(b2d);
         var f2d = b2d.build();
         for (var i = 0; i < 20; i += 1) {
             var arrMins = 10 + i;

@@ -9,11 +9,23 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 
+/**
+ * Utility class for formatting dates, durations, stops, and journey legs in French.
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
+ */
 public final class FormatterFr {
 
     private FormatterFr() {
     }
 
+    /**
+     * Formats the specified duration into a human-readable string.
+     *
+     * @param duration the duration to format.
+     * @return the formatted duration string.
+     */
     public static String formatDuration(Duration duration) {
         long hours = duration.toHours();
         long minutes = duration.toMinutesPart();
@@ -25,6 +37,12 @@ public final class FormatterFr {
         }
     }
 
+    /**
+     * Formats the specified {@link LocalDateTime} into a time string.
+     *
+     * @param dateTime the time to format.
+     * @return the formatted time string.
+     */
     public static String formatTime(LocalDateTime dateTime) {
         DateTimeFormatter formatter = new DateTimeFormatterBuilder()
                 .appendValue(ChronoField.HOUR_OF_DAY)
@@ -34,6 +52,12 @@ public final class FormatterFr {
         return dateTime.format(formatter);
     }
 
+    /**
+     * Formats the platform name of the given {@link Stop}.
+     *
+     * @param stop the stop whose platform name to format.
+     * @return the formatted platform name.
+     */
     public static String formatPlatformName(Stop stop) {
         String platformName = stop.platformName();
 
@@ -43,11 +67,23 @@ public final class FormatterFr {
         return Character.isDigit(platformName.charAt(0)) ? "voie " + platformName : "quai " + platformName;
     }
 
+    /**
+     * Formats a foot leg into a human-readable description.
+     *
+     * @param footLeg the foot leg to format.
+     * @return the formatted description of the foot leg.
+     */
     public static String formatLeg(Journey.Leg.Foot footLeg) {
         String type = footLeg.isTransfer() ? "changement" : "trajet à pied";
         return String.format("%s (%s)", type, formatDuration(footLeg.duration()));
     }
 
+    /**
+     * Formats a transport leg into a human-readable description.
+     *
+     * @param leg the transport leg to format.
+     * @return the formatted description of the transport leg.
+     */
     public static String formatLeg(Journey.Leg.Transport leg) {
         StringBuilder sb = new StringBuilder();
         sb.append(formatTime(leg.depTime()))
@@ -73,6 +109,12 @@ public final class FormatterFr {
         return sb.toString();
     }
 
+    /**
+     * Formats the route destination for a transport leg.
+     *
+     * @param transportLeg the transport leg whose route and destination are to be formatted.
+     * @return the formatted route destination string.
+     */
     public static String formatRouteDestination(Journey.Leg.Transport transportLeg) {
         return transportLeg.route() + " Direction " + transportLeg.destination();
     }

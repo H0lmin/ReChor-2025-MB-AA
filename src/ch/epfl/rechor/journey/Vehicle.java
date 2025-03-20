@@ -4,8 +4,9 @@ import java.util.List;
 
 /**
  * Enum representing different types of vehicles used in a journey.
- * The available vehicle types are: TRAM, METRO, TRAIN, BUS, FERRY, AERIAL_LIFT, and FUNICULAR.
- * This enum also provides a list of all vehicle types available.
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
  */
 public enum Vehicle {
     TRAM,

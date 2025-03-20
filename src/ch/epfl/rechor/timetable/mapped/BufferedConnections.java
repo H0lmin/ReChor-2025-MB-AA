@@ -7,16 +7,22 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
 public class BufferedConnections implements Connections {
-    private final StructuredBuffer structuredBuffer;
 
+    private final static int DEP_STOP_ID = 0;
+    private final static int DEP_MINUTES = 1;
+    private final static int ARR_STOP_ID = 2;
+    private final static int ARR_MINUTES = 3;
+    private final static int TRIP_POS_ID = 4;
+
+    private final StructuredBuffer structuredBuffer;
     private final IntBuffer nextBuffer;
 
     private final static Structure CONNECTIONS_STRUCTURE = new Structure(
-            Structure.field(0, Structure.FieldType.U16),
-            Structure.field(1, Structure.FieldType.U16),
-            Structure.field(2, Structure.FieldType.U16),
-            Structure.field(3, Structure.FieldType.U16),
-            Structure.field(4, Structure.FieldType.S32)
+            Structure.field(DEP_STOP_ID, Structure.FieldType.U16),
+            Structure.field(DEP_MINUTES, Structure.FieldType.U16),
+            Structure.field(ARR_STOP_ID, Structure.FieldType.U16),
+            Structure.field(ARR_MINUTES, Structure.FieldType.U16),
+            Structure.field(TRIP_POS_ID, Structure.FieldType.S32)
     );
 
     public BufferedConnections (ByteBuffer buffer, ByteBuffer succBuffer){
@@ -27,38 +33,38 @@ public class BufferedConnections implements Connections {
     @Override
     public int depStopId(int id) {
         checkIndex(id);
-        return structuredBuffer.getU16(0, id);
+        return structuredBuffer.getU16(DEP_STOP_ID, id);
     }
 
     @Override
     public int depMins(int id) {
         checkIndex(id);
-        return structuredBuffer.getU16(1, id);
+        return structuredBuffer.getU16(DEP_MINUTES, id);
     }
 
     @Override
     public int arrStopId(int id) {
         checkIndex(id);
-        return structuredBuffer.getU16(2, id);
+        return structuredBuffer.getU16(ARR_STOP_ID, id);
     }
 
     @Override
     public int arrMins(int id) {
         checkIndex(id);
-        return structuredBuffer.getU16(3, id);
+        return structuredBuffer.getU16(ARR_MINUTES, id);
     }
 
     @Override
     public int tripId(int id) {
         checkIndex(id);
-        int packed = structuredBuffer.getS32(4, id);
+        int packed = structuredBuffer.getS32(TRIP_POS_ID, id);
         return Bits32_24_8.unpack24(packed);
     }
 
     @Override
     public int tripPos(int id) {
         checkIndex(id);
-        int packed = structuredBuffer.getS32(4, id);
+        int packed = structuredBuffer.getS32(TRIP_POS_ID, id);
         return Bits32_24_8.unpack8(packed);
     }
 

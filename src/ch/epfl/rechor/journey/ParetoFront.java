@@ -1,8 +1,5 @@
 package ch.epfl.rechor.journey;
 
-import ch.epfl.rechor.FormatterFr;
-
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.function.LongConsumer;
@@ -41,26 +38,6 @@ public final class ParetoFront {
         for (long value : tupleFront) {
             action.accept(value);
         }
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("ParetoFront{");
-        for (long tuple : tupleFront) {
-            if (PackedCriteria.hasDepMins(tuple)){
-                sb.append("Heure de départ : ")
-                        .append(FormatterFr.formatDuration(Duration.ofMinutes(PackedCriteria.depMins(tuple))))
-                        .append(" ; ");
-            }
-            sb.append("Heure d'arrivée: ")
-                    .append(FormatterFr.formatDuration(Duration.ofMinutes(PackedCriteria.arrMins(tuple))))
-                    .append(" ; ");
-            sb.append("Nombre de changements: ")
-                    .append(PackedCriteria.changes(tuple))
-                    .append(" ; \n");
-        }
-        sb.append("}");
-        return sb.toString();
     }
 
     public static class Builder {
@@ -105,42 +82,33 @@ public final class ParetoFront {
         }
 
         public Builder add(long newTuple) {
-            // Compute the "order value" (upper 32 bits) of the new tuple.
             long newOrder = orderValue(newTuple);
 
-            // Step 1: Find the insertion position (first index where the order value is not less than newOrder).
-            int pos = 0;
-            while (pos < size && orderValue(frontier[pos]) < newOrder) {
-                pos++;
-            }
-
-            // Step 2: Check only the tuples BEFORE the insertion position.
-            for (int i = 0; i < pos; i++) {
-                if (PackedCriteria.dominatesOrIsEqual(frontier[i], newTuple)) {
+            int insertionPos = 0;
+            while (insertionPos < size && orderValue(frontier[insertionPos]) < newOrder) {
+                if (PackedCriteria.dominatesOrIsEqual(frontier[insertionPos], newTuple)) {
                     return this;
                 }
+                insertionPos++;
             }
 
-            int tempPos = pos;
-            int tempSize = size;
-            for (int j = pos; j < tempSize; j++){
-                if(!PackedCriteria.dominatesOrIsEqual(newTuple, frontier[j])){
-                    frontier[tempPos++] = frontier[j];
-                } else {
-                    size --;
+            int newSize = insertionPos;
+            for (int j = insertionPos; j < size; j++) {
+                if (!PackedCriteria.dominatesOrIsEqual(newTuple, frontier[j])) {
+                    frontier[newSize++] = frontier[j];
                 }
             }
 
-            // Step 4: Resize the array if needed.
-            if (size == frontier.length) {
+            if (newSize + 1 > frontier.length) {
                 frontier = Arrays.copyOf(frontier, (int) (frontier.length * 1.5));
             }
 
-            // Shift the remaining (non-dominated) tuples one position to the right.
-            arraycopy(frontier, pos, frontier, pos + 1, tempPos - pos);
-            frontier[pos] = newTuple;
-
-            size = tempPos + 1;
+            int tailLength = newSize - insertionPos;
+            if (tailLength > 0) {
+                arraycopy(frontier, insertionPos, frontier, insertionPos + 1, tailLength);
+            }
+            frontier[insertionPos] = newTuple;
+            size = newSize + 1;
             return this;
         }
 
@@ -163,21 +131,19 @@ public final class ParetoFront {
 
 
         public boolean fullyDominates(Builder that, int depMins) {
-            int j = 0; // pointer for traversing 'this' frontier
+            int j = 0;
             for (int i = 0; i < that.size; i++) {
-                // Repack the tuple from 'that' with the provided departure time.
                 long tupleWithDep = PackedCriteria.withDepMins(that.frontier[i], depMins);
-                // Advance in 'this' frontier until we find one that dominates or equals the repacked tuple.
                 while (j < this.size && !PackedCriteria.dominatesOrIsEqual(this.frontier[j], tupleWithDep)) {
                     j++;
                 }
-                // If we reached the end of 'this' frontier, then no tuple dominated this one.
                 if (j == this.size) {
                     return false;
                 }
             }
             return true;
         }
+
         /**
          * Builds an immutable ParetoFront from the current frontier.
          *
@@ -185,26 +151,6 @@ public final class ParetoFront {
          */
         public ParetoFront build() {
             return new ParetoFront(Arrays.copyOf(frontier, size));
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder("ParetoFront{");
-            for (int i = 0; i<size ; i++) {
-                if (PackedCriteria.hasDepMins(frontier[i])){
-                    sb.append("Heure de départ : ")
-                            .append(FormatterFr.formatDuration(Duration.ofMinutes(PackedCriteria.depMins(frontier[i]))))
-                            .append(" ; ");
-                }
-                sb.append("Heure d'arrivée: ")
-                        .append(FormatterFr.formatDuration(Duration.ofMinutes(PackedCriteria.arrMins(frontier[i]))))
-                        .append(" ; ");
-                sb.append("Nombre de changements: ")
-                        .append(PackedCriteria.changes(frontier[i]))
-                        .append(" ; \n");
-            }
-            sb.append("}");
-            return sb.toString();
         }
     }
 

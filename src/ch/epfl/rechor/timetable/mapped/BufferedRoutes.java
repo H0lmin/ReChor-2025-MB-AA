@@ -9,11 +9,13 @@ import java.util.List;
 import static ch.epfl.rechor.journey.Vehicle.ALL;
 
 public class BufferedRoutes implements Routes {
+
     private final static int NAME_ID = 0;
     private final static int KIND = 1;
+
     private final static Structure ROUTES_STRUCTURE = new Structure(
-            Structure.field(0, Structure.FieldType.U16),
-            Structure.field(1, Structure.FieldType.U8)
+            Structure.field(NAME_ID, Structure.FieldType.U16),
+            Structure.field(KIND, Structure.FieldType.U8)
     );
     private final List<String> stringTable;
     private final StructuredBuffer buffer;
@@ -31,14 +33,14 @@ public class BufferedRoutes implements Routes {
     @Override
     public Vehicle vehicle(int id) {
         checkIndex(id);
-        int kind = buffer.getU8(1, id);
+        int kind = buffer.getU8(KIND, id);
         return ALL.get(kind);
     }
 
     @Override
     public String name(int id) {
         checkIndex(id);
-        int nameIndex = buffer.getU16(0, id);
+        int nameIndex = buffer.getU16(NAME_ID, id);
         return stringTable.get(nameIndex);
     }
 
