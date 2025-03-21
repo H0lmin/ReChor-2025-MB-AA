@@ -26,13 +26,11 @@ public class BufferedTrips implements Trips {
 
     @Override
     public int routeId(int id){
-        checkIndex(id);
         return buffer.getU16(ROUTE_ID, id);
     }
 
     @Override
     public String destination(int id){
-        checkIndex(id);
         int destinationId = buffer.getU16(DESTINATION_ID, id);
         return stringTable.get(destinationId);
     }
@@ -42,9 +40,4 @@ public class BufferedTrips implements Trips {
         return buffer.size();
     }
 
-    private void checkIndex(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid ");
-        }
-    }
 }

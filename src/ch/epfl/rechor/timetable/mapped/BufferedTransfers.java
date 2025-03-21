@@ -26,7 +26,15 @@ public class BufferedTransfers implements Transfers {
         structuredBuffer = new StructuredBuffer(TRANSFERS_STRUCTURE, buffer);
         int n = structuredBuffer.size();
 
-        arrivingAtTable = new int[n == 0 ? 0 : (arrStationId(n-1) + 1)];
+        int maxStation = -1;
+        for (int i = 0; i < n; i++) {
+            int station = arrStationId(i);
+            if (station > maxStation) {
+                maxStation = station;
+            }
+        }
+        arrivingAtTable = new int[maxStation + 1];
+
         for (int i = 0; i < n; ) {
             int station = arrStationId(i);
             int start = i;
@@ -38,19 +46,16 @@ public class BufferedTransfers implements Transfers {
     }
 
     private int arrStationId(int id) {
-        checkIndex(id);
         return structuredBuffer.getU16(ARR_STATION_ID, id);
     }
 
     @Override
     public int depStationId(int id) {
-        checkIndex(id);
         return structuredBuffer.getU16(DEP_STATION_ID, id);
     }
 
     @Override
     public int minutes(int id) {
-        checkIndex(id);
         return structuredBuffer.getU8(TRANSFER_MINUTES, id);
     }
 
@@ -66,10 +71,6 @@ public class BufferedTransfers implements Transfers {
     public int minutesBetween(int depStationId, int arrStationId) {
 
         int interval = arrivingAt(arrStationId);
-        if (interval == 0){
-            throw new NoSuchElementException("No transfer found between stations "
-                    + depStationId + " and " + arrStationId);
-        }
 
         int start = PackedRange.startInclusive(interval);
         int end = PackedRange.endExclusive(interval);
@@ -86,9 +87,4 @@ public class BufferedTransfers implements Transfers {
         return structuredBuffer.size();
     }
 
-    private void checkIndex(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid ");
-        }
-    }
 }

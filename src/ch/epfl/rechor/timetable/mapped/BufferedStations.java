@@ -58,7 +58,6 @@ public final class BufferedStations implements Stations {
      */
     @Override
     public String name(int id) {
-        checkIndex(id);
         int stringIndex = buffer.getU16(NAME_ID, id);
         return stringTable.get(stringIndex);
     }
@@ -72,7 +71,6 @@ public final class BufferedStations implements Stations {
      */
     @Override
     public double longitude(int id) {
-        checkIndex(id);
         int rawLongitude = buffer.getS32(LON, id);
         return rawLongitude * UNIT_TO_DEGREES;
     }
@@ -86,7 +84,6 @@ public final class BufferedStations implements Stations {
      */
     @Override
     public double latitude(int id) {
-        checkIndex(id);
         int rawLatitude = buffer.getS32(LAT, id);
         return rawLatitude * UNIT_TO_DEGREES;
     }
@@ -99,11 +96,5 @@ public final class BufferedStations implements Stations {
     @Override
     public int size() {
         return buffer.size();
-    }
-
-    private void checkIndex(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid ");
-        }
     }
 }

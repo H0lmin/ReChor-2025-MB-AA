@@ -32,45 +32,38 @@ public class BufferedConnections implements Connections {
 
     @Override
     public int depStopId(int id) {
-        checkIndex(id);
         return structuredBuffer.getU16(DEP_STOP_ID, id);
     }
 
     @Override
     public int depMins(int id) {
-        checkIndex(id);
         return structuredBuffer.getU16(DEP_MINUTES, id);
     }
 
     @Override
     public int arrStopId(int id) {
-        checkIndex(id);
         return structuredBuffer.getU16(ARR_STOP_ID, id);
     }
 
     @Override
     public int arrMins(int id) {
-        checkIndex(id);
         return structuredBuffer.getU16(ARR_MINUTES, id);
     }
 
     @Override
     public int tripId(int id) {
-        checkIndex(id);
         int packed = structuredBuffer.getS32(TRIP_POS_ID, id);
         return Bits32_24_8.unpack24(packed);
     }
 
     @Override
     public int tripPos(int id) {
-        checkIndex(id);
         int packed = structuredBuffer.getS32(TRIP_POS_ID, id);
         return Bits32_24_8.unpack8(packed);
     }
 
     @Override
     public int nextConnectionId(int id) {
-        checkIndex(id);
         return nextBuffer.get(id);
     }
 
@@ -79,9 +72,4 @@ public class BufferedConnections implements Connections {
         return structuredBuffer.size();
     }
 
-    private void checkIndex(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid ");
-        }
-    }
 }

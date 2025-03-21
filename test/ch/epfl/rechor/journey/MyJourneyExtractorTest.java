@@ -21,6 +21,9 @@ class MyJourneyExtractorTest {
             List<Journey> js = JourneyExtractor.journeys(p, 7872);
             String j = JourneyIcalConverter.toIcalendar(js.get(32));
             System.out.println(j);
+            List<Journey> js1 = JourneyExtractor.journeys(p, 7800);
+            String j1 = JourneyIcalConverter.toIcalendar(js1.get(32));
+            System.out.println(j1);
         } catch (IOException e) {
             e.printStackTrace();
         }

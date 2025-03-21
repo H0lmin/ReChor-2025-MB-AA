@@ -44,7 +44,6 @@ public final class BufferedPlatforms implements Platforms {
      */
     @Override
     public String name(int id) {
-        checkIndex(id);
         int stringIndex = buffer.getU16(NAME_ID, id);
         return stringTable.get(stringIndex);
     }
@@ -58,7 +57,6 @@ public final class BufferedPlatforms implements Platforms {
      */
     @Override
     public int stationId(int id) {
-        checkIndex(id);
         return buffer.getU16(STATION_ID, id);
     }
 
@@ -72,9 +70,4 @@ public final class BufferedPlatforms implements Platforms {
         return buffer.size();
     }
 
-    private void checkIndex(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid ");
-        }
-    }
 }

@@ -32,21 +32,14 @@ public class BufferedRoutes implements Routes {
 
     @Override
     public Vehicle vehicle(int id) {
-        checkIndex(id);
         int kind = buffer.getU8(KIND, id);
         return ALL.get(kind);
     }
 
     @Override
     public String name(int id) {
-        checkIndex(id);
         int nameIndex = buffer.getU16(NAME_ID, id);
         return stringTable.get(nameIndex);
     }
 
-    private void checkIndex(int id) {
-        if (id < 0 || id >= size()) {
-            throw new IndexOutOfBoundsException("The id isn't valid ");
-        }
-    }
 }
