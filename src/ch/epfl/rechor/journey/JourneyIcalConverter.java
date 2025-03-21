@@ -7,20 +7,25 @@ import java.time.LocalDateTime;
 import java.util.StringJoiner;
 import java.util.UUID;
 
-
 /**
  * @author Amine AMIRA (393410)
  * @author Malak Berrada (379791)
  */
+
+/**
+ * Converts a Journey object into iCalendar format.
+ */
 public final class JourneyIcalConverter {
 
-    private JourneyIcalConverter() {
-    }
+    private JourneyIcalConverter() {}
 
+    /**
+     * Converts a Journey to iCalendar format.
+     */
     public static String toIcalendar(Journey journey) {
         IcalBuilder builder = new IcalBuilder();
-
         StringJoiner description = new StringJoiner("\\n");
+
         for (Journey.Leg leg : journey.legs()) {
             switch (leg) {
                 case Journey.Leg.Foot foot -> description.add(FormatterFr.formatLeg(foot));
