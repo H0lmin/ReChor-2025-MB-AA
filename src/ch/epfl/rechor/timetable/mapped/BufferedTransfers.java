@@ -7,14 +7,12 @@ import ch.epfl.rechor.timetable.Transfers;
 import java.nio.ByteBuffer;
 import java.util.NoSuchElementException;
 
+
 public class BufferedTransfers implements Transfers {
 
     private final static int DEP_STATION_ID = 0;
     private final static int ARR_STATION_ID = 1;
     private final static int TRANSFER_MINUTES = 2;
-
-    private final StructuredBuffer structuredBuffer;
-    private final int[] arrivingAtTable;
 
     private static final Structure TRANSFERS_STRUCTURE = new Structure(
             Structure.field(DEP_STATION_ID, Structure.FieldType.U16),
@@ -22,7 +20,10 @@ public class BufferedTransfers implements Transfers {
             Structure.field(TRANSFER_MINUTES, Structure.FieldType.U8)
     );
 
-    public BufferedTransfers(ByteBuffer buffer) {
+    private final StructuredBuffer structuredBuffer;
+    private final int[] arrivingAtTable;
+
+    public BufferedTransfers (ByteBuffer buffer) {
         structuredBuffer = new StructuredBuffer(TRANSFERS_STRUCTURE, buffer);
         int n = structuredBuffer.size();
 
@@ -45,22 +46,22 @@ public class BufferedTransfers implements Transfers {
         }
     }
 
-    private int arrStationId(int id) {
+    private int arrStationId (int id) {
         return structuredBuffer.getU16(ARR_STATION_ID, id);
     }
 
     @Override
-    public int depStationId(int id) {
+    public int depStationId (int id) {
         return structuredBuffer.getU16(DEP_STATION_ID, id);
     }
 
     @Override
-    public int minutes(int id) {
+    public int minutes (int id) {
         return structuredBuffer.getU8(TRANSFER_MINUTES, id);
     }
 
     @Override
-    public int arrivingAt(int stationId) {
+    public int arrivingAt (int stationId) {
         if (stationId < 0 || stationId >= arrivingAtTable.length) {
             throw new IndexOutOfBoundsException("The id isn't valid ");
         }
@@ -68,14 +69,14 @@ public class BufferedTransfers implements Transfers {
     }
 
     @Override
-    public int minutesBetween(int depStationId, int arrStationId) {
+    public int minutesBetween (int depStationId, int arrStationId) {
 
         int interval = arrivingAt(arrStationId);
 
         int start = PackedRange.startInclusive(interval);
         int end = PackedRange.endExclusive(interval);
-        for (int i = start; i < end; i++){
-            if(depStationId(i) == depStationId)
+        for (int i = start; i < end; i++) {
+            if (depStationId(i) == depStationId)
                 return minutes(i);
         }
 
@@ -83,7 +84,7 @@ public class BufferedTransfers implements Transfers {
     }
 
     @Override
-    public int size() {
+    public int size () {
         return structuredBuffer.size();
     }
 

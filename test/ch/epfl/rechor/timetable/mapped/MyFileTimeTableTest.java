@@ -49,6 +49,14 @@ public class MyFileTimeTableTest {
             return buffer;
         }
 
+        // For BufferedPlatforms: structure is U16 (NAME_ID), U16 (STATION_ID) → 4 bytes per record.
+        static ByteBuffer createDummyPlatformsBuffer() {
+            ByteBuffer buffer = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN);
+            buffer.putShort((short) 0); // NAME_ID = 0 (points to "Station0" or a dummy platform name)
+            buffer.putShort((short) 0); // STATION_ID = 0 (the platform belongs to station id 0)
+            return buffer;
+        }
+
         // For routes.bin (used by both BufferedRoutes and BufferedPlatforms):
         // We create a buffer whose size (12 bytes) is divisible by both 3 and 4.
         static ByteBuffer createDummyRoutesBuffer() {
@@ -109,6 +117,7 @@ public class MyFileTimeTableTest {
         // Create required binary files.
         DummyData.writeBufferToFile(tempDir.resolve("stations.bin"), DummyData.createDummyStationsBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("station-aliases.bin"), DummyData.createDummyStationAliasesBuffer());
+        DummyData.writeBufferToFile(tempDir.resolve("platforms.bin"), DummyData.createDummyPlatformsBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("routes.bin"), DummyData.createDummyRoutesBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("transfers.bin"), DummyData.createDummyTransfersBuffer());
 
@@ -146,6 +155,7 @@ public class MyFileTimeTableTest {
         ByteBuffer badBuffer = ByteBuffer.allocate(7).order(ByteOrder.BIG_ENDIAN);
         Files.write(tempDir.resolve("stations.bin"), badBuffer.array());
         DummyData.writeBufferToFile(tempDir.resolve("station-aliases.bin"), DummyData.createDummyStationAliasesBuffer());
+        DummyData.writeBufferToFile(tempDir.resolve("platforms.bin"), DummyData.createDummyPlatformsBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("routes.bin"), DummyData.createDummyRoutesBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("transfers.bin"), DummyData.createDummyTransfersBuffer());
 
@@ -167,6 +177,7 @@ public class MyFileTimeTableTest {
         Files.write(tempDir.resolve("strings.txt"), DummyData.createDummyStrings());
         DummyData.writeBufferToFile(tempDir.resolve("stations.bin"), DummyData.createDummyStationsBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("station-aliases.bin"), DummyData.createDummyStationAliasesBuffer());
+        DummyData.writeBufferToFile(tempDir.resolve("platforms.bin"), DummyData.createDummyPlatformsBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("routes.bin"), DummyData.createDummyRoutesBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("transfers.bin"), DummyData.createDummyTransfersBuffer());
 
@@ -195,6 +206,7 @@ public class MyFileTimeTableTest {
         Files.write(tempDir.resolve("strings.txt"), DummyData.createDummyStrings());
         DummyData.writeBufferToFile(tempDir.resolve("stations.bin"), DummyData.createDummyStationsBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("station-aliases.bin"), DummyData.createDummyStationAliasesBuffer());
+        DummyData.writeBufferToFile(tempDir.resolve("platforms.bin"), DummyData.createDummyPlatformsBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("routes.bin"), DummyData.createDummyRoutesBuffer());
         DummyData.writeBufferToFile(tempDir.resolve("transfers.bin"), DummyData.createDummyTransfersBuffer());
 

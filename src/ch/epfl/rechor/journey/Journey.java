@@ -12,9 +12,6 @@ import static java.util.Objects.requireNonNull;
  * (walking and transport legs) that a passenger can take to travel from
  * a departure stop to an arrival stop.
  *
- * @author Amine AMIRA (393410)
- * @author Malak Berrada (379791)
- *
  * @param legs the list of journey legs that compose the journey.
  */
 public record Journey(List<Leg> legs) {
@@ -23,9 +20,9 @@ public record Journey(List<Leg> legs) {
      *
      * @param legs the list of legs composing the journey.
      * @throws IllegalArgumentException if list is empty, there is two consecutive legs of the same type (except if
-     * they are intermediate stops, the departure time of each leg (except the first) is not before the arrival time
-     * of the previous leg or the departure stop of each leg (except the first) equals the arrival stop of the previous
-     * leg.
+     *                                  they are intermediate stops, the departure time of each leg (except the first) is not before the arrival time
+     *                                  of the previous leg or the departure stop of each leg (except the first) equals the arrival stop of the previous
+     *                                  leg.
      */
     public Journey {
         checkArgument(!legs.isEmpty());
@@ -52,7 +49,7 @@ public record Journey(List<Leg> legs) {
      *
      * @return the departure stop of the journey.
      */
-    public Stop depStop() {
+    public Stop depStop () {
         return legs.getFirst().depStop();
     }
 
@@ -61,7 +58,7 @@ public record Journey(List<Leg> legs) {
      *
      * @return the stop at which the journey ends.
      */
-    public Stop arrStop() {
+    public Stop arrStop () {
         return legs.getLast().arrStop();
     }
 
@@ -70,7 +67,7 @@ public record Journey(List<Leg> legs) {
      *
      * @return the time when the journey begins.
      */
-    public LocalDateTime depTime() {
+    public LocalDateTime depTime () {
         return legs.getFirst().depTime();
     }
 
@@ -79,7 +76,7 @@ public record Journey(List<Leg> legs) {
      *
      * @return the time when the journey ends.
      */
-    public LocalDateTime arrTime() {
+    public LocalDateTime arrTime () {
         return legs.getLast().arrTime();
     }
 
@@ -88,7 +85,7 @@ public record Journey(List<Leg> legs) {
      *
      * @return the duration between the departure time and the arrival time.
      */
-    public Duration duration() {
+    public Duration duration () {
         return Duration.between(depTime(), arrTime());
     }
 
@@ -105,28 +102,28 @@ public record Journey(List<Leg> legs) {
          *
          * @return the departure stop.
          */
-        Stop depStop();
+        Stop depStop ();
 
         /**
          * Returns the departure time of this leg.
          *
          * @return the departure time.
          */
-        LocalDateTime depTime();
+        LocalDateTime depTime ();
 
         /**
          * Returns the arrival stop of this leg.
          *
          * @return the arrival stop.
          */
-        Stop arrStop();
+        Stop arrStop ();
 
         /**
          * Returns the arrival time of this leg.
          *
          * @return the arrival time.
          */
-        LocalDateTime arrTime();
+        LocalDateTime arrTime ();
 
         /**
          * Returns the list of intermediate stops (if any) for this leg.
@@ -137,14 +134,14 @@ public record Journey(List<Leg> legs) {
          *
          * @return an unmodifiable list of intermediate stops.
          */
-        List<IntermediateStop> intermediateStops();
+        List<IntermediateStop> intermediateStops ();
 
         /**
          * Returns the duration of this leg.
          *
          * @return the duration between the departure time and the arrival time.
          */
-        default Duration duration() {
+        default Duration duration () {
             return Duration.between(depTime(), arrTime());
         }
 
@@ -153,6 +150,7 @@ public record Journey(List<Leg> legs) {
          * <p>
          * The departure time must not be before the arrival time.
          * </p>
+         *
          * @param stop    the intermediate stop.
          * @param arrTime the arrival time at the intermediate stop.
          * @param depTime the departure time from the intermediate stop.
@@ -174,14 +172,14 @@ public record Journey(List<Leg> legs) {
         /**
          * Represents a transport leg, i.e. a ride in a vehicle.
          *
-         * @param depStop             the departure stop.
-         * @param depTime             the departure time.
-         * @param arrStop             the arrival stop.
-         * @param arrTime             the arrival time.
-         * @param intermediateStops   the list of intermediate stops (if any).
-         * @param vehicle             the vehicle used for this leg.
-         * @param route               the route identifier.
-         * @param destination         the final destination of the transport leg.
+         * @param depStop           the departure stop.
+         * @param depTime           the departure time.
+         * @param arrStop           the arrival stop.
+         * @param arrTime           the arrival time.
+         * @param intermediateStops the list of intermediate stops (if any).
+         * @param vehicle           the vehicle used for this leg.
+         * @param route             the route identifier.
+         * @param destination       the final destination of the transport leg.
          */
         record Transport(Stop depStop, LocalDateTime depTime, Stop arrStop, LocalDateTime arrTime,
                          List<IntermediateStop> intermediateStops, Vehicle vehicle, String route,
@@ -191,6 +189,7 @@ public record Journey(List<Leg> legs) {
              * <p>
              * Assigns an unmodifiable list of intermediate stops (if any).
              * </p>
+             *
              * @throws NullPointerException     if any of the arguments are null.
              * @throws IllegalArgumentException if the arrival time at the stop isn't before the departure time from the stop
              */
@@ -238,7 +237,7 @@ public record Journey(List<Leg> legs) {
              *
              * @return an empty list.
              */
-            public List<IntermediateStop> intermediateStops() {
+            public List<IntermediateStop> intermediateStops () {
                 return List.of();
             }
 
@@ -247,7 +246,7 @@ public record Journey(List<Leg> legs) {
              *
              * @return {@code true} if the departure and arrival stops have the same name; {@code false} otherwise.
              */
-            public boolean isTransfer() {
+            public boolean isTransfer () {
                 return depStop.name().equals(arrStop.name());
             }
         }

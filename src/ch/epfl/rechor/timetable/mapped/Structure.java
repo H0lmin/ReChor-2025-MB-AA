@@ -32,10 +32,11 @@ public final class Structure {
      * The fields must be provided in order. In particular, the field at position <em>i</em> must have an index of
      * <em>i</em>.
      * </p>
+     *
      * @param fields the fields that define the record layout.
      * @throws IllegalArgumentException if the fields are not provided in order (i.e., if a field's index does not match its position).
      */
-    public Structure(Field... fields) {
+    public Structure (Field... fields) {
 
         for (int i = 0; i < fields.length; i++) {
             checkArgument(fields[i].index() == i);
@@ -62,7 +63,7 @@ public final class Structure {
      * @param type  the type of the field; must not be {@code null}.
      * @return a new {@code Field} instance.
      */
-    public static Field field(int index, FieldType type) {
+    public static Field field (int index, FieldType type) {
         return new Field(index, type);
     }
 
@@ -71,7 +72,7 @@ public final class Structure {
      *
      * @return the total number of bytes in a record.
      */
-    public int totalSize() {
+    public int totalSize () {
         return totalSize;
     }
 
@@ -82,7 +83,7 @@ public final class Structure {
      * @param elementIndex the index of the record within the binary array.
      * @return the byte offset of the specified field.
      */
-    public int offset(int fieldIndex, int elementIndex) {
+    public int offset (int fieldIndex, int elementIndex) {
         return elementIndex * totalSize + fieldOffsets[fieldIndex];
     }
 
@@ -110,7 +111,7 @@ public final class Structure {
          * @throws NullPointerException if {@code type} is {@code null}.
          */
         public Field {
-            if(type == null){
+            if (type == null) {
                 throw new NullPointerException("the type cannot be null");
             }
         }

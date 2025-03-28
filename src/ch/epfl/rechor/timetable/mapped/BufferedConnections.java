@@ -6,6 +6,10 @@ import ch.epfl.rechor.timetable.Connections;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
+/**
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
+ */
 public class BufferedConnections implements Connections {
 
     private final static int DEP_STOP_ID = 0;

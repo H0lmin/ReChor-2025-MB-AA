@@ -18,12 +18,17 @@ class MyJourneyExtractorTest {
             TimeTable t = FileTimeTable.in(Path.of("timetable"));
             LocalDate date = LocalDate.of(2025, Month.MARCH, 18);
             Profile p = readProfile(t, date, 11486);
-            List<Journey> js = JourneyExtractor.journeys(p, 7872);
-            String j = JourneyIcalConverter.toIcalendar(js.get(32));
-            System.out.println(j);
-            List<Journey> js1 = JourneyExtractor.journeys(p, 7800);
-            String j1 = JourneyIcalConverter.toIcalendar(js1.get(32));
-            System.out.println(j1);
+                try{
+                    for (int i = 7782; i < 7785 ; i++) {
+                    List<Journey> js = JourneyExtractor.journeys(p, 187);
+                        for (int l = 0; l < js.toArray().length; l++) {
+                        String j = JourneyIcalConverter.toIcalendar(js.get(l));
+                        System.out.println(j);
+                        }
+                    }
+                } catch (IndexOutOfBoundsException e){
+                    System.out.println("Tfou ma khedamch");
+                }
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -12,8 +12,7 @@ import java.time.temporal.ChronoField;
 /**
  * Utility class for formatting dates, durations, stops, and journey legs in French.
  *
- * @author Amine AMIRA (393410)
- * @author Malak Berrada (379791)
+
  */
 public final class FormatterFr {
 

@@ -30,7 +30,7 @@ public final class BufferedStationAliases implements StationAliases {
      * @param stringTable the list of strings for alias and station names.
      * @param buffer      the byte buffer containing the flattened alias data.
      */
-    public BufferedStationAliases(List<String> stringTable, ByteBuffer buffer) {
+    public BufferedStationAliases (List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = List.copyOf(stringTable);
         this.buffer = new StructuredBuffer(ALIASES_STRUCTURE, buffer);
     }
@@ -43,7 +43,7 @@ public final class BufferedStationAliases implements StationAliases {
      * @throws IndexOutOfBoundsException if {@code id} is invalid.
      */
     @Override
-    public String alias(int id) {
+    public String alias (int id) {
         int stringIndex = buffer.getU16(ALIAS_ID, id);
         return stringTable.get(stringIndex);
     }
@@ -56,7 +56,7 @@ public final class BufferedStationAliases implements StationAliases {
      * @throws IndexOutOfBoundsException if {@code id} is invalid.
      */
     @Override
-    public String stationName(int id) {
+    public String stationName (int id) {
         int stringIndex = buffer.getU16(STATION_NAME_ID, id);
         return stringTable.get(stringIndex);
     }
@@ -67,7 +67,7 @@ public final class BufferedStationAliases implements StationAliases {
      * @return the number of alias records.
      */
     @Override
-    public int size() {
+    public int size () {
         return buffer.size();
     }
 

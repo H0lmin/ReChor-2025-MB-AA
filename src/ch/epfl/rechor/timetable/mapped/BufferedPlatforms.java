@@ -7,9 +7,9 @@ import java.util.List;
 
 /**
  * Provides access to flattened platform (voie/quai) data.
- * <p>
- * This class interprets the data using a fixed structure defined by {@code PLATFORM_STRUCTURE}.
- * </p>
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
  */
 public final class BufferedPlatforms implements Platforms {
 
@@ -30,7 +30,7 @@ public final class BufferedPlatforms implements Platforms {
      * @param stringTable the list of strings used for platform names.
      * @param buffer      the byte buffer containing the flattened platform data.
      */
-    public BufferedPlatforms(List<String> stringTable, ByteBuffer buffer) {
+    public BufferedPlatforms (List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = List.copyOf(stringTable);
         this.buffer = new StructuredBuffer(PLATFORM_STRUCTURE, buffer);
     }
@@ -43,7 +43,7 @@ public final class BufferedPlatforms implements Platforms {
      * @throws IndexOutOfBoundsException if {@code id} is invalid.
      */
     @Override
-    public String name(int id) {
+    public String name (int id) {
         int stringIndex = buffer.getU16(NAME_ID, id);
         return stringTable.get(stringIndex);
     }
@@ -56,7 +56,7 @@ public final class BufferedPlatforms implements Platforms {
      * @throws IndexOutOfBoundsException if {@code id} is invalid.
      */
     @Override
-    public int stationId(int id) {
+    public int stationId (int id) {
         return buffer.getU16(STATION_ID, id);
     }
 
@@ -66,7 +66,7 @@ public final class BufferedPlatforms implements Platforms {
      * @return the number of platforms.
      */
     @Override
-    public int size() {
+    public int size () {
         return buffer.size();
     }
 

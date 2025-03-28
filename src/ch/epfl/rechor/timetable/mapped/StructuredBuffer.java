@@ -26,7 +26,7 @@ public final class StructuredBuffer {
      * @param buffer    the {@link ByteBuffer} containing the flattened data.
      * @throws IllegalArgumentException if the buffer's capacity is not a multiple of the record size.
      */
-    public StructuredBuffer(Structure structure, ByteBuffer buffer) {
+    public StructuredBuffer (Structure structure, ByteBuffer buffer) {
         this.structure = structure;
         this.buffer = buffer.slice();
 
@@ -42,7 +42,7 @@ public final class StructuredBuffer {
      *
      * @return the number of elements.
      */
-    public int size() {
+    public int size () {
         return size;
     }
 
@@ -53,7 +53,7 @@ public final class StructuredBuffer {
      * @param elementIndex the index of the record.
      * @return the unsigned 8-bit integer (0 ≤ value < 256).
      */
-    public int getU8(int fieldIndex, int elementIndex) {
+    public int getU8 (int fieldIndex, int elementIndex) {
         int offset = structure.offset(fieldIndex, elementIndex);
         return Byte.toUnsignedInt(buffer.get(offset));
     }
@@ -65,7 +65,7 @@ public final class StructuredBuffer {
      * @param elementIndex the index of the record.
      * @return the unsigned 16-bit integer (0 ≤ value < 65 536).
      */
-    public int getU16(int fieldIndex, int elementIndex) {
+    public int getU16 (int fieldIndex, int elementIndex) {
         int offset = structure.offset(fieldIndex, elementIndex);
         return Short.toUnsignedInt(buffer.getShort(offset));
     }
@@ -77,7 +77,7 @@ public final class StructuredBuffer {
      * @param elementIndex the index of the record.
      * @return the signed 32-bit integer.
      */
-    public int getS32(int fieldIndex, int elementIndex) {
+    public int getS32 (int fieldIndex, int elementIndex) {
         int offset = structure.offset(fieldIndex, elementIndex);
         return buffer.getInt(offset);
     }

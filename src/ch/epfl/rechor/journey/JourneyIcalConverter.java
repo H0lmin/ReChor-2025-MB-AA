@@ -15,12 +15,13 @@ import java.util.UUID;
  */
 public final class JourneyIcalConverter {
 
-    private JourneyIcalConverter() {}
+    private JourneyIcalConverter () {
+    }
 
     /**
      * Converts a Journey to iCalendar format.
      */
-    public static String toIcalendar(Journey journey) {
+    public static String toIcalendar (Journey journey) {
         IcalBuilder builder = new IcalBuilder();
         StringJoiner description = new StringJoiner("\\n");
 

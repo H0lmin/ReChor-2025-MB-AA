@@ -13,6 +13,18 @@ import java.time.LocalDate;
 import java.util.List;
 
 
+/**
+ * @param directory
+ * @param stringTable
+ * @param stations
+ * @param stationAliases
+ * @param platforms
+ * @param routes
+ * @param transfers
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
+ */
 public record FileTimeTable(
         Path directory,
         List<String> stringTable,
@@ -23,7 +35,7 @@ public record FileTimeTable(
         Transfers transfers
 ) implements TimeTable {
 
-    public static TimeTable in(Path directory) throws IOException {
+    public static TimeTable in (Path directory) throws IOException {
         Path stringsPath = directory.resolve("strings.txt");
         List<String> stringTable = List.copyOf(
                 Files.readAllLines(stringsPath, StandardCharsets.ISO_8859_1)
@@ -40,14 +52,14 @@ public record FileTimeTable(
         return new FileTimeTable(directory, stringTable, stations, stationAliases, platforms, routes, transfers);
     }
 
-    private static ByteBuffer mapFile(Path path) throws IOException {
+    private static ByteBuffer mapFile (Path path) throws IOException {
         try (FileChannel channel = FileChannel.open(path)) {
             return channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
         }
     }
 
     @Override
-    public Trips tripsFor(LocalDate date) {
+    public Trips tripsFor (LocalDate date) {
         Path dayFolder = directory.resolve(date.toString());
         Path tripsPath = dayFolder.resolve("trips.bin");
         try {
@@ -59,7 +71,7 @@ public record FileTimeTable(
     }
 
     @Override
-    public Connections connectionsFor(LocalDate date) {
+    public Connections connectionsFor (LocalDate date) {
         Path dayFolder = directory.resolve(date.toString());
         Path connectionsPath = dayFolder.resolve("connections.bin");
         Path succPath = dayFolder.resolve("connections-succ.bin");

@@ -80,7 +80,7 @@ class MyProfileTest {
 //        LocalDate date = LocalDate.of(2025, 3, 18);
 //
 //        ParetoFront pf1 = ParetoFront.EMPTY;
-//        ParetoFront pf2 = new ParetoFront(new long[] { 0x12345678L });
+//        var pf2 = new ParetoFront.Builder();
 //        List<ParetoFront> fronts = List.of(pf1, pf2);
 //        Profile p = new Profile(tt, date, 999, fronts);
 //
@@ -180,16 +180,6 @@ class MyProfileTest {
             };
         }
     }
-
-//    @Test
-//    void testStationFrontImmutability() {
-//        TimeTable tt = new DummyTimeTable();
-//        LocalDate date = LocalDate.of(2025, 3, 18);
-//        ParetoFront pf = new ParetoFront(new long[] { 0xDEAD_BEEFL });
-//        Profile p = new Profile(tt, date, 42, List.of(pf));
-//        // Attempt to mutate the returned list:
-//        assertThrows(UnsupportedOperationException.class, () -> p.stationFront().remove(0));
-//    }
 }
 
 
