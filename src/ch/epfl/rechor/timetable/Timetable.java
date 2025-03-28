@@ -2,6 +2,12 @@ package ch.epfl.rechor.timetable;
 
 import java.time.LocalDate;
 
+/**
+ * Interface representing the Timetable of all interfaces.
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
+ */
 public interface TimeTable {
 
     /**

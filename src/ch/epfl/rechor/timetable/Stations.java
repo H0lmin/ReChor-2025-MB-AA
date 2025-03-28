@@ -1,5 +1,12 @@
 package ch.epfl.rechor.timetable;
 
+/**
+ * Interface representing stations of the trip.
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
+ */
+
 public interface Stations extends Indexed {
     /**
      * returns the name of the given indexed station

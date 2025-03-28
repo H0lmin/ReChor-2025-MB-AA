@@ -11,22 +11,38 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class JourneyExtractor {
+/**
+ * Extracts journeys using the method journeys
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
+ */
+
+public final class JourneyExtractor {
     private JourneyExtractor() {
     }
-
+    /**
+     * Packs the arrival time, number of changes, and payload into a 64-bit long.
+     * @param profile the Profile of the journeys
+     * @param depStationId the id of the station of departure
+     * @return a List<Journey> of the journeys extracted
+     */
     public static List<Journey> journeys(Profile profile, int depStationId) {
         List<Journey> journeys = new ArrayList<>();
 
         profile.forStation(depStationId).
                 forEach(criteria ->
-                journeys.add(extractJourney(profile, depStationId, criteria))
-        );
+                        journeys.add(extractJourney(profile, depStationId, criteria))
+                );
         journeys.sort(Comparator.comparing(Journey::depTime).
                 thenComparing(Journey::arrTime));
         return journeys;
     }
 
+    /**
+     * private method to extract a journey using the profile, the id of the station of departure
+     * and the criteria extracted in the public method journeys
+     */
     private static Journey extractJourney(Profile profile, int depStationId, long criteria) {
         TimeTable tt = profile.timeTable();
         Connections conns = profile.connections();

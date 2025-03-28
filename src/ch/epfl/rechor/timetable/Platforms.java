@@ -2,10 +2,14 @@ package ch.epfl.rechor.timetable;
 
 /**
  * Interface representing indexed tracks/platforms.
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
+ *
  */
 public interface Platforms extends Indexed {
     /**
-     * Returns the name of the platform 
+     * Returns the name of the platform
      * @param id the index of the platform
      * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
      */

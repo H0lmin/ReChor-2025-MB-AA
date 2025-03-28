@@ -4,9 +4,13 @@ import static ch.epfl.rechor.Preconditions.checkArgument;
 
 /**
  * Utility class for packing and unpacking 32-bit integers into 24-bit and 8-bit parts.
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
  */
 public class Bits32_24_8 {
-    private Bits32_24_8() {}
+    private Bits32_24_8() {
+    }
 
     /**
      * Packs 24-bit and 8-bit values into a 32-bit integer.

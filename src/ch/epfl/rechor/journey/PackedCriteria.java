@@ -3,12 +3,10 @@ package ch.epfl.rechor.journey;
 import static ch.epfl.rechor.Preconditions.checkArgument;
 
 /**
+ * Utility class for packing and unpacking journey criteria into a 64-bit long.
+ *
  * @author Amine AMIRA (393410)
  * @author Malak Berrada (379791)
- */
-
-/**
- * Utility class for packing and unpacking journey criteria into a 64-bit long.
  */
 public final class PackedCriteria {
 

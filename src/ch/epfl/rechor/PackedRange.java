@@ -4,7 +4,11 @@ import static ch.epfl.rechor.Preconditions.checkArgument;
 
 /**
  * Utility class for packing and unpacking integer ranges into a single integer.
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
  */
+
 public class PackedRange {
     private PackedRange() {}
 

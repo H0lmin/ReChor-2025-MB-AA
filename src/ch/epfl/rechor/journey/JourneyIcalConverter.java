@@ -8,12 +8,10 @@ import java.util.StringJoiner;
 import java.util.UUID;
 
 /**
+ * Converts a Journey object into iCalendar format.
+ *
  * @author Amine AMIRA (393410)
  * @author Malak Berrada (379791)
- */
-
-/**
- * Converts a Journey object into iCalendar format.
  */
 public final class JourneyIcalConverter {
 

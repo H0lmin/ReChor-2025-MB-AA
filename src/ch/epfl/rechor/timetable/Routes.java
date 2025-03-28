@@ -3,7 +3,10 @@ package ch.epfl.rechor.timetable;
 import ch.epfl.rechor.journey.Vehicle;
 
 /**
- * Interface representing indexed public transport routes.
+ * Interface representing indexed public transport routes
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
  */
 public interface Routes extends Indexed {
     /**
@@ -14,7 +17,7 @@ public interface Routes extends Indexed {
     Vehicle vehicle(int id);
 
     /**
-     * Returns the name of the route at the given index 
+     * Returns the name of the route at the given index
      * @param id the index of the route
      * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
      */

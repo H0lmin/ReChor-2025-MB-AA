@@ -2,6 +2,9 @@ package ch.epfl.rechor.timetable;
 
 /**
  * Interface representing indexed public transport trips.
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
  */
 public interface Trips extends Indexed {
     /**
