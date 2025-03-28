@@ -10,6 +10,7 @@ package ch.epfl.rechor.timetable;
 public interface Indexed {
     /**
      * Returns the size of the data, the number of elements
+     * @return the size
      */
     int size ();
 }

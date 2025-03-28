@@ -15,7 +15,13 @@ import java.util.List;
 public class JourneyExtractor {
     private JourneyExtractor () {
     }
-
+    /**
+     * Packs the arrival time, number of changes, and payload into a 64-bit long.
+     *
+     * @param profile      the Profile of the journeys
+     * @param depStationId the id of the station of departure
+     * @return a List<Journey> of the journeys extracted
+     */
     public static List<Journey> journeys (Profile profile, int depStationId) {
         List<Journey> journeys = new ArrayList<>();
 
@@ -29,6 +35,10 @@ public class JourneyExtractor {
         return journeys;
     }
 
+    /** private method to extract a journey using the profile, the id of the station of departure
+     * and the criteria extracted in the public method journeys
+     *
+     */
     private static Journey extractJourney (Profile profile, int depStationId, long criteria) {
         TimeTable tt = profile.timeTable();
         Connections conns = profile.connections();
@@ -70,7 +80,10 @@ public class JourneyExtractor {
         return new Journey(legs);
     }
 
-
+    /**
+     * private method to construct a transport leg of a journey based on connection information from a timetable
+     * tracking intermediate stops and connection details.
+     */
     private static LegExtractionResult addTransportLeg (Connections conns,
                                                         TimeTable tt,
                                                         LocalDate date,
@@ -108,7 +121,10 @@ public class JourneyExtractor {
         return new LegExtractionResult(leg, current.arrTime(), current.arrStopId());
     }
 
-
+    /**
+     *  private method to retrieve detailed information about a specific connection from a timetable.
+     *
+     */
     private static ConnectionInfo extractConnectionInfo (Connections conns, TimeTable tt, LocalDate date, int connId) {
         int depStopId = conns.depStopId(connId);
         int arrStopId = conns.arrStopId(connId);
@@ -133,6 +149,10 @@ public class JourneyExtractor {
         return date.atStartOfDay().plusMinutes(minutes);
     }
 
+    /**
+     * adds a walking leg to a journey helping model realistic travel plans
+     * that include walking transfers between stations.
+     */
     private static void addFootLeg (List<Journey.Leg> legs,
                                     TimeTable tt,
                                     int fromStopId,
@@ -150,7 +170,9 @@ public class JourneyExtractor {
         legs.add(footLeg);
     }
 
-
+    /**
+     * private method which retrieves detailed information about a stop from the timetable.
+     */
     private static Stop stopOf (TimeTable tt, int stopId) {
         int stationId = tt.stationId(stopId);
         String name = tt.stations().name(stationId);

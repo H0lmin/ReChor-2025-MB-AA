@@ -1,6 +1,8 @@
 package ch.epfl.rechor.timetable;
 
 /**
+ * Interface representing connections between stations.
+ *
  * @author Amine AMIRA (393410)
  * @author Malak Berrada (379791)
  */
@@ -20,6 +22,7 @@ public interface Connections extends Indexed {
      *
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
+     * @return the departure time
      */
     int depMins(int id);
 
@@ -27,13 +30,15 @@ public interface Connections extends Indexed {
      * Returns the arrival stop ID for the connection at the specified index
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
+     * @return the arrival stop ID
      */
     int arrStopId(int id);
 
     /**
      * Returns the arrival time of the connection at the specified index
      * @param id the index of the connection
-     * @throws IndexOutOfBoundsException if the id is out of range     
+     * @throws IndexOutOfBoundsException if the id is out of range
+     * @return the arrival time
      */
     int arrMins(int id);
 
@@ -41,6 +46,7 @@ public interface Connections extends Indexed {
      * Returns the ID of the trip
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
+     * @return the tripId
      */
     int tripId(int id);
 
@@ -48,7 +54,8 @@ public interface Connections extends Indexed {
      * Returns the position of the connection within its trip for the
      * connection at the specified index.
      * @param id the index of the connection
-     * @throws IndexOutOfBoundsException if the id is out of range 
+     * @throws IndexOutOfBoundsException if the id is out of range
+     * @return the position of the trip
      */
     int tripPos(int id);
 
@@ -56,6 +63,7 @@ public interface Connections extends Indexed {
      * Returns the index of the next connection in the same trip
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
+     * @return the nexConnectionId
      */
     int nextConnectionId(int id);
 }

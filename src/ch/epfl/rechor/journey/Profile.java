@@ -8,13 +8,17 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
+ * Record representing a Profile (using a timetable, a date,
+ * the id of the station of arrival and a list of ParetoFront)
  * @param timeTable
  * @param date
  * @param arrStationId
  * @param stationFront
+ *
  * @author Amine AMIRA (393410)
  * @author Malak Berrada (379791)
  */
+
 public record Profile(TimeTable timeTable,
                       LocalDate date,
                       int arrStationId,
@@ -22,19 +26,29 @@ public record Profile(TimeTable timeTable,
     public Profile {
         stationFront = List.copyOf(stationFront);
     }
-
+    /**
+     * Returns the Connections corresponding to the Profile
+     */
     public Connections connections () {
         return timeTable.connectionsFor(date);
     }
-
+    /**
+     * Returns the Trips corresponding to the Profile
+     */
     public Trips trips () {
         return timeTable.tripsFor(date);
     }
-
+    /**
+     * Returns the ParetoFront of the station indexed
+     * @param stationId the id of the station corresponding to the ParetoFront
+     * @throws IndexOutOfBoundsException if the stationId is not valid
+     */
     public ParetoFront forStation (int stationId) {
         return stationFront.get(stationId);
     }
-
+    /**
+     * Represents a builder of the record Profile destined to be used to find optimal trips
+     */
     public final static class Builder {
         private final TimeTable timeTable;
         private final LocalDate date;
@@ -53,6 +67,12 @@ public record Profile(TimeTable timeTable,
             this.tripBuilders = new ParetoFront.Builder[tripCount];
         }
 
+        /**
+         * Returns the builder of the ParetoFront corresponding to the station indexed
+         * @param stationId the id of the station
+         * @throws IndexOutOfBoundsException if the stationId is not valid
+         * @return null if there was no call to the method setForStation for this station
+         */
         public ParetoFront.Builder forStation (int stationId) {
             if (stationId < 0 || stationId >= stationBuilders.length) {
                 throw new IndexOutOfBoundsException("Invalid stationId: " + stationId);
@@ -60,6 +80,12 @@ public record Profile(TimeTable timeTable,
             return stationBuilders[stationId];
         }
 
+        /**
+         * Associates the builder of the ParetoFront given to the station indexed
+         * @param stationId the id of the station
+         * @param builder the builder of the ParetoFront associated
+         * @throws IndexOutOfBoundsException if the stationId is not valid
+         */
         public void setForStation (int stationId, ParetoFront.Builder builder) {
             if (stationId < 0 || stationId >= stationBuilders.length) {
                 throw new IndexOutOfBoundsException("Invalid stationId: " + stationId);
@@ -67,6 +93,12 @@ public record Profile(TimeTable timeTable,
             stationBuilders[stationId] = builder;
         }
 
+        /**
+         * Returns the builder of the ParetoFront corresponding to the trip indexed
+         * @param tripId the id of the trip given
+         * @throws IndexOutOfBoundsException if the tripId is not valid
+         * @return null if there was no call to the method setForTrip for this trip
+         */
         public ParetoFront.Builder forTrip (int tripId) {
             if (tripId < 0 || tripId >= tripBuilders.length) {
                 throw new IndexOutOfBoundsException("Invalid tripId: " + tripId);
@@ -74,6 +106,12 @@ public record Profile(TimeTable timeTable,
             return tripBuilders[tripId];
         }
 
+        /**
+         * Associates the builder of the ParetoFront given to the trip indexed
+         * @param tripId the id of the station
+         * @param builder the builder of the ParetoFront associated
+         * @throws IndexOutOfBoundsException if the tripId is not valid
+         */
         public void setForTrip (int tripId, ParetoFront.Builder builder) {
             if (tripId < 0 || tripId >= tripBuilders.length) {
                 throw new IndexOutOfBoundsException("Invalid tripId: " + tripId);
@@ -81,6 +119,9 @@ public record Profile(TimeTable timeTable,
             tripBuilders[tripId] = builder;
         }
 
+        /**
+         * Returns the Profile without the ParetoFront corresponding to the trips
+         */
         public Profile build () {
             ParetoFront[] finalFronts = new ParetoFront[stationBuilders.length];
             for (int i = 0; i < stationBuilders.length; i++) {

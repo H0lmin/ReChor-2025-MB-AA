@@ -12,6 +12,7 @@ public interface Stations extends Indexed {
      *
      * @param id the station index
      * @throws IndexOutOfBoundsException if id < 0 or id >= size()
+     * @return the name of the station
      **/
     String name (int id);
 
@@ -20,6 +21,7 @@ public interface Stations extends Indexed {
      *
      * @param id the station index
      * @throws IndexOutOfBoundsException if id < 0 or id >= size()
+     * @return the longitude
      */
     double longitude (int id);
 
@@ -28,6 +30,7 @@ public interface Stations extends Indexed {
      *
      * @param id the station index
      * @throws IndexOutOfBoundsException if id < 0 or id >= size()
+     * @return the latitude
      */
     double latitude (int id);
 }

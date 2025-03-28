@@ -14,6 +14,7 @@ public interface Routes extends Indexed {
      *
      * @param id the index of the route
      * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
+     * @return the type of vehicle
      */
     Vehicle vehicle (int id);
 
@@ -22,6 +23,7 @@ public interface Routes extends Indexed {
      *
      * @param id the index of the route
      * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
+     * @return the name of the route
      */
     String name (int id);
 }

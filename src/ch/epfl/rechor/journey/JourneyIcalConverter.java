@@ -20,6 +20,9 @@ public final class JourneyIcalConverter {
 
     /**
      * Converts a Journey to iCalendar format.
+     *
+     * @param journey
+     *
      */
     public static String toIcalendar (Journey journey) {
         IcalBuilder builder = new IcalBuilder();

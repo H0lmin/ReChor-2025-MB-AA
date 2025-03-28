@@ -12,6 +12,7 @@ public interface Platforms extends Indexed {
      *
      * @param id the index of the platform
      * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
+     * @return the name
      */
     String name (int id);
 
@@ -20,6 +21,7 @@ public interface Platforms extends Indexed {
      *
      * @param id the index of the track/platform
      * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
+     * @return the stationId
      */
     int stationId (int id);
 }

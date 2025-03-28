@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
+ * Provides access to flattened data about a table of trips.
+ *
  * @author Amine AMIRA (393410)
  * @author Malak Berrada (379791)
  */
@@ -27,18 +29,32 @@ public class BufferedTrips implements Trips {
         this.buffer = new StructuredBuffer(TRIPS_STRUCTURE, buffer);
     }
 
-
+    /**
+     * Returns the index of the route to which the indexed trip belongs
+     * @param id the index of the trip
+     * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
+     */
     @Override
     public int routeId (int id) {
         return buffer.getU16(ROUTE_ID, id);
     }
 
+    /**
+     * Returns the name of the destination
+     * @param id the index of the trip
+     * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
+     */
     @Override
     public String destination (int id) {
         int destinationId = buffer.getU16(DESTINATION_ID, id);
         return stringTable.get(destinationId);
     }
 
+    /**
+     * Returns the number of trips stored in the buffer.
+     *
+     * @return the number of trips.
+     */
     @Override
     public int size () {
         return buffer.size();

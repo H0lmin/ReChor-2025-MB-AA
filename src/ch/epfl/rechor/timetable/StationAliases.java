@@ -12,6 +12,7 @@ public interface StationAliases extends Indexed {
      *
      * @param id the index of the alternative station
      * @throws IndexOutOfBoundsException if the index is out of range
+     * @return the name alias
      */
     String alias (int id);
 
@@ -20,6 +21,7 @@ public interface StationAliases extends Indexed {
      *
      * @param id the index of the primary station
      * @throws IndexOutOfBoundsException if id < 0 or id >= size()
+     * @return the stationName
      */
     String stationName (int id);
 }
