@@ -7,7 +7,8 @@ package ch.epfl.rechor;
  * @author Malak Berrada (379791)
  */
 public final class Preconditions {
-    private Preconditions() {}
+    private Preconditions() {
+    }
 
     /**
      * Checks if the provided condition is true.

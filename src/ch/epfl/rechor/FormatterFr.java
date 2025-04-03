@@ -64,7 +64,9 @@ public final class FormatterFr {
         if (stop.platformName() == null || stop.platformName().isEmpty()) {
             return "";
         }
-        return Character.isDigit(platformName.charAt(0)) ? "voie " + platformName : "quai " + platformName;
+        return Character.isDigit(platformName.charAt(0)) ?
+                "voie " + platformName :
+                "quai " + platformName;
     }
 
     /**

@@ -9,8 +9,8 @@ import java.util.List;
 import static ch.epfl.rechor.journey.Vehicle.ALL;
 
 /**
- * The BufferedRoutes class provides a buffered implementation for managing
- * route data in a public transport timetable.
+ * The BufferedRoutes class provides a buffered implementation for managing route data in a public
+ * transport timetable.
  *
  * @author Amine AMIRA (393410)
  * @author Malak Berrada (379791)
@@ -31,9 +31,10 @@ public class BufferedRoutes implements Routes {
      * Constructs a new BufferedRoutes instance.
      *
      * @param stringTable a list of route names used for lookup based on indices.
-     * @param buffer a ByteBuffer containing the raw route data arranged according to the defined structure.
+     * @param buffer      a ByteBuffer containing the raw route data arranged according to the
+     *                    defined structure.
      */
-    public BufferedRoutes (List<String> stringTable, ByteBuffer buffer) {
+    public BufferedRoutes(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = List.copyOf(stringTable);
         this.buffer = new StructuredBuffer(ROUTES_STRUCTURE, buffer);
     }
@@ -44,7 +45,7 @@ public class BufferedRoutes implements Routes {
      * @return the total count of routes.
      */
     @Override
-    public int size () {
+    public int size() {
         return buffer.size();
     }
 
@@ -55,7 +56,7 @@ public class BufferedRoutes implements Routes {
      * @return the {@link Vehicle} corresponding to the route's kind.
      */
     @Override
-    public Vehicle vehicle (int id) {
+    public Vehicle vehicle(int id) {
         int kind = buffer.getU8(KIND, id);
         return ALL.get(kind);
     }
@@ -67,7 +68,7 @@ public class BufferedRoutes implements Routes {
      * @return the route name as a String, obtained from the string table.
      */
     @Override
-    public String name (int id) {
+    public String name(int id) {
         int nameIndex = buffer.getU16(NAME_ID, id);
         return stringTable.get(nameIndex);
     }

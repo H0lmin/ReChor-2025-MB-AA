@@ -21,9 +21,6 @@ public class BufferedConnections implements Connections {
     private final static int ARR_MINUTES = 3;
     private final static int TRIP_POS_ID = 4;
 
-    private final StructuredBuffer structuredBuffer;
-    private final IntBuffer nextBuffer;
-
     private final static Structure CONNECTIONS_STRUCTURE = new Structure(
             Structure.field(DEP_STOP_ID, Structure.FieldType.U16),
             Structure.field(DEP_MINUTES, Structure.FieldType.U16),
@@ -31,19 +28,24 @@ public class BufferedConnections implements Connections {
             Structure.field(ARR_MINUTES, Structure.FieldType.U16),
             Structure.field(TRIP_POS_ID, Structure.FieldType.S32)
     );
+    
+    private final StructuredBuffer structuredBuffer;
+    private final IntBuffer nextBuffer;
+
     /**
      * Constructs a {@code BufferedConnections} instance.
      *
-     * @param buffer      the byte buffer containing the flattened platform data.
-     * @param succBuffer  the byte buffer containing the next flattened data
+     * @param buffer     the byte buffer containing the flattened platform data.
+     * @param succBuffer the byte buffer containing the next flattened data
      */
-    public BufferedConnections (ByteBuffer buffer, ByteBuffer succBuffer){
-        this.structuredBuffer = new StructuredBuffer(CONNECTIONS_STRUCTURE, buffer) ;
+    public BufferedConnections(ByteBuffer buffer, ByteBuffer succBuffer) {
+        this.structuredBuffer = new StructuredBuffer(CONNECTIONS_STRUCTURE, buffer);
         this.nextBuffer = succBuffer.slice().asIntBuffer();
     }
 
     /**
      * Returns the departure stop ID for the connection at the specified index.
+     *
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
      */
@@ -54,6 +56,7 @@ public class BufferedConnections implements Connections {
 
     /**
      * Returns the departure time of the connection at the specified index
+     *
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
      */
@@ -64,6 +67,7 @@ public class BufferedConnections implements Connections {
 
     /**
      * Returns the arrival stop ID for the connection at the specified index
+     *
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
      */
@@ -74,6 +78,7 @@ public class BufferedConnections implements Connections {
 
     /**
      * Returns the arrival time of the connection at the specified index
+     *
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
      */
@@ -84,6 +89,7 @@ public class BufferedConnections implements Connections {
 
     /**
      * Returns the ID of the trip
+     *
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
      */
@@ -94,8 +100,9 @@ public class BufferedConnections implements Connections {
     }
 
     /**
-     * Returns the position of the connection within its trip for the
-     * connection at the specified index.
+     * Returns the position of the connection within its trip for the connection at the specified
+     * index.
+     *
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
      */
@@ -107,6 +114,7 @@ public class BufferedConnections implements Connections {
 
     /**
      * Returns the index of the next connection in the same trip
+     *
      * @param id the index of the connection
      * @throws IndexOutOfBoundsException if the id is out of range
      */

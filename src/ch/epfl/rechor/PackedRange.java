@@ -10,7 +10,8 @@ import static ch.epfl.rechor.Preconditions.checkArgument;
  */
 
 public class PackedRange {
-    private PackedRange() {}
+    private PackedRange() {
+    }
 
     /**
      * Packs a start and end value into a single integer.

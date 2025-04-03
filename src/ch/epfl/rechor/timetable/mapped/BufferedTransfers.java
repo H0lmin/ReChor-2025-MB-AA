@@ -34,7 +34,7 @@ public class BufferedTransfers implements Transfers {
      *
      * @param buffer the byte buffer containing the flattened platform data.
      */
-    public BufferedTransfers (ByteBuffer buffer) {
+    public BufferedTransfers(ByteBuffer buffer) {
         structuredBuffer = new StructuredBuffer(TRANSFERS_STRUCTURE, buffer);
         int n = structuredBuffer.size();
 
@@ -58,9 +58,10 @@ public class BufferedTransfers implements Transfers {
     }
 
     /**
-     * Private method to return the index of the arrival station for the transfer at the given index.
+     * Private method to return the index of the arrival station for the transfer at the given
+     * index.
      */
-    private int arrStationId (int id) {
+    private int arrStationId(int id) {
         return structuredBuffer.getU16(ARR_STATION_ID, id);
     }
 
@@ -68,11 +69,11 @@ public class BufferedTransfers implements Transfers {
      * Returns the index of the departure station for the transfer at the given index.
      *
      * @param id the index of the transfer
-     * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
      * @return the index of the departure station
+     * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
      */
     @Override
-    public int depStationId (int id) {
+    public int depStationId(int id) {
         return structuredBuffer.getU16(DEP_STATION_ID, id);
     }
 
@@ -80,23 +81,25 @@ public class BufferedTransfers implements Transfers {
      * Returns the duration, in minutes, of the transfer at the given index.
      *
      * @param id the index of the transfer
-     * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
      * @return the duration of the transfer
+     * @throws IndexOutOfBoundsException if the index is invalid (id < 0 or id >= size())
      */
     @Override
-    public int minutes (int id) {
+    public int minutes(int id) {
         return structuredBuffer.getU8(TRANSFER_MINUTES, id);
     }
 
     /**
-     * Returns the packed interval of transfer indices whose arrival station is the one at the given index
+     * Returns the packed interval of transfer indices whose arrival station is the one at the given
+     * index
      *
      * @param stationId the index of the arrival station
-     * @throws IndexOutOfBoundsException if the index is invalid (stationId < 0 or stationId >= size())
      * @return the interval of transfer indices
+     * @throws IndexOutOfBoundsException if the index is invalid (stationId < 0 or stationId >=
+     *                                   size())
      */
     @Override
-    public int arrivingAt (int stationId) {
+    public int arrivingAt(int stationId) {
         if (stationId < 0 || stationId >= arrivingAtTable.length) {
             throw new IndexOutOfBoundsException("The id isn't valid ");
         }
@@ -108,12 +111,12 @@ public class BufferedTransfers implements Transfers {
      *
      * @param depStationId the index of the departure station
      * @param arrStationId the index of the arrival station
+     * @return the duration of change between the departure station and station of arrival
      * @throws IndexOutOfBoundsException if either index is invalid
      * @throws NoSuchElementException    if no changes are possible between the two stations
-     * @return the duration of change between the departure station and station of arrival
      */
     @Override
-    public int minutesBetween (int depStationId, int arrStationId) {
+    public int minutesBetween(int depStationId, int arrStationId) {
 
         int interval = arrivingAt(arrStationId);
 
@@ -124,7 +127,8 @@ public class BufferedTransfers implements Transfers {
                 return minutes(i);
         }
 
-        throw new NoSuchElementException("No transfer found between stations " + depStationId + " and " + arrStationId);
+        throw new NoSuchElementException("No transfer found between stations " + depStationId +
+                " and " + arrStationId);
     }
 
     /**
@@ -133,7 +137,7 @@ public class BufferedTransfers implements Transfers {
      * @return the number of transfers.
      */
     @Override
-    public int size () {
+    public int size() {
         return structuredBuffer.size();
     }
 

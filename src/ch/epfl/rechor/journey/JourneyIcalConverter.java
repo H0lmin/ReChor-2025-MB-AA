@@ -15,23 +15,24 @@ import java.util.UUID;
  */
 public final class JourneyIcalConverter {
 
-    private JourneyIcalConverter () {
+    private JourneyIcalConverter() {
     }
 
     /**
-     * Converts a Journey to iCalendar format.
+     * Converts the given {@link Journey} into an iCalendar formatted string.
      *
-     * @param journey
-     *
+     * @param journey the {@link Journey} object to be converted.
+     * @return a {@code String} representing the iCalendar formatted event for the journey.
      */
-    public static String toIcalendar (Journey journey) {
+    public static String toIcalendar(Journey journey) {
         IcalBuilder builder = new IcalBuilder();
         StringJoiner description = new StringJoiner("\\n");
 
         for (Journey.Leg leg : journey.legs()) {
             switch (leg) {
                 case Journey.Leg.Foot foot -> description.add(FormatterFr.formatLeg(foot));
-                case Journey.Leg.Transport transport -> description.add(FormatterFr.formatLeg(transport));
+                case Journey.Leg.Transport transport ->
+                        description.add(FormatterFr.formatLeg(transport));
             }
         }
 
@@ -44,7 +45,8 @@ public final class JourneyIcalConverter {
                 .add(IcalBuilder.Name.DTSTAMP, LocalDateTime.now())
                 .add(IcalBuilder.Name.DTSTART, journey.depTime())
                 .add(IcalBuilder.Name.DTEND, journey.arrTime())
-                .add(IcalBuilder.Name.SUMMARY, journey.depStop().name() + " → " + journey.arrStop().name())
+                .add(IcalBuilder.Name.SUMMARY,
+                        journey.depStop().name() + " → " + journey.arrStop().name())
                 .add(IcalBuilder.Name.DESCRIPTION, description.toString())
                 .end()
                 .end()

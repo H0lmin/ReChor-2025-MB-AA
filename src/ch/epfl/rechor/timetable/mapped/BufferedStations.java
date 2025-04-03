@@ -44,7 +44,7 @@ public final class BufferedStations implements Stations {
      * @param stringTable the list of strings used for station names.
      * @param buffer      the byte buffer containing the flattened station data.
      */
-    public BufferedStations (List<String> stringTable, ByteBuffer buffer) {
+    public BufferedStations(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = List.copyOf(stringTable);
         this.buffer = new StructuredBuffer(STATION_STRUCTURE, buffer);
     }
@@ -57,7 +57,7 @@ public final class BufferedStations implements Stations {
      * @throws IndexOutOfBoundsException if {@code id} is invalid.
      */
     @Override
-    public String name (int id) {
+    public String name(int id) {
         int stringIndex = buffer.getU16(NAME_ID, id);
         return stringTable.get(stringIndex);
     }
@@ -70,7 +70,7 @@ public final class BufferedStations implements Stations {
      * @throws IndexOutOfBoundsException if {@code id} is invalid.
      */
     @Override
-    public double longitude (int id) {
+    public double longitude(int id) {
         int rawLongitude = buffer.getS32(LON, id);
         return rawLongitude * UNIT_TO_DEGREES;
     }
@@ -83,7 +83,7 @@ public final class BufferedStations implements Stations {
      * @throws IndexOutOfBoundsException if {@code id} is invalid.
      */
     @Override
-    public double latitude (int id) {
+    public double latitude(int id) {
         int rawLatitude = buffer.getS32(LAT, id);
         return rawLatitude * UNIT_TO_DEGREES;
     }
@@ -94,7 +94,7 @@ public final class BufferedStations implements Stations {
      * @return the number of stations.
      */
     @Override
-    public int size () {
+    public int size() {
         return buffer.size();
     }
 }

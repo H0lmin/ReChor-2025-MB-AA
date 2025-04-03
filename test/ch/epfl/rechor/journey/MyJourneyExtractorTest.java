@@ -15,14 +15,14 @@ class MyJourneyExtractorTest {
 
     public static void main(String[] args) {
         try {
-            TimeTable t = FileTimeTable.in(Path.of("timetable"));
+            TimeTable t = FileTimeTable.in(Path.of("timetable1"));
             LocalDate date = LocalDate.of(2025, Month.MARCH, 18);
             Profile p = readProfile(t, date, 11486);
                 try{
                     for (int i = 7782; i < 7785 ; i++) {
-                    List<Journey> js = JourneyExtractor.journeys(p, 187);
+                    List<Journey> js = JourneyExtractor.journeys(p, 7872);
                         for (int l = 0; l < js.toArray().length; l++) {
-                        String j = JourneyIcalConverter.toIcalendar(js.get(l));
+                        String j = JourneyIcalConverter.toIcalendar(js.get(32));
                         System.out.println(j);
                         }
                     }

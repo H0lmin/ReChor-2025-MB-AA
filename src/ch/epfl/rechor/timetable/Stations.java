@@ -11,26 +11,26 @@ public interface Stations extends Indexed {
      * Returns the name of the given indexed station
      *
      * @param id the station index
-     * @throws IndexOutOfBoundsException if id < 0 or id >= size()
      * @return the name of the station
+     * @throws IndexOutOfBoundsException if id < 0 or id >= size()
      **/
-    String name (int id);
+    String name(int id);
 
     /**
      * Returns the longitude in degrees of the given indexed station
      *
      * @param id the station index
-     * @throws IndexOutOfBoundsException if id < 0 or id >= size()
      * @return the longitude
+     * @throws IndexOutOfBoundsException if id < 0 or id >= size()
      */
-    double longitude (int id);
+    double longitude(int id);
 
     /**
      * Returns the latitude in degrees of the given indexed station
      *
      * @param id the station index
-     * @throws IndexOutOfBoundsException if id < 0 or id >= size()
      * @return the latitude
+     * @throws IndexOutOfBoundsException if id < 0 or id >= size()
      */
-    double latitude (int id);
+    double latitude(int id);
 }
