@@ -26,9 +26,7 @@ public final class ParetoFront {
     }
 
     /**
-     * Returns the number of tuples in the Pareto frontier.
-     *
-     * @return the size of the frontier.
+     * @return the number of tuples in the Pareto frontier.
      */
     public int size() {
         return tupleFront.length;

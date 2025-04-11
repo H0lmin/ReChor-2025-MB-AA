@@ -1,146 +1,156 @@
 package ch.epfl.rechor.journey;
 
+import ch.epfl.rechor.timetable.TimeTable;
+import ch.epfl.rechor.timetable.Connections;
+import ch.epfl.rechor.timetable.Transfers;
+import ch.epfl.rechor.PackedRange;
 import ch.epfl.rechor.Bits32_24_8;
-import ch.epfl.rechor.timetable.*;
 
 import java.time.LocalDate;
+import java.util.NoSuchElementException;
 
-/**
- * A Router provides the method to compute a Profile from a TimeTable, a date, and an arrival station.
- *
- * @author Amine AMIRA (393410)
- * @author Malak Berrada (379791)
- */
-public record Router(TimeTable timeTable) {
-    private static final int UNDEFINED = -1;
+record Router(TimeTable timeTable) {
 
-    /**
-     * Computes a Profile with optimal journeys to the given arrival station on the given date.
-     *
-     * @param date the date of the journey
-     * @param arrStationId the id of the arrival station
-     * @return the computed Profile
-     */
-    public Profile profile(LocalDate date, int arrStationId) {
-        var transfers = timeTable.transfers();
-        var connections = timeTable.connectionsFor(date);
-        var trips = timeTable.tripsFor(date);
-
-        var profileBuilder = new Profile.Builder(timeTable, date, arrStationId);
-
-
-        int stationCount = timeTable.stations().size();
-        for (int stationId = 0; stationId < stationCount; stationId++) {
-            profileBuilder.setForStation(stationId, new ParetoFront.Builder());
-        }
-
-        int tripCount = trips.size();
-        for (int tripId = 0; tripId < tripCount; tripId++) {
-            profileBuilder.setForTrip(tripId, new ParetoFront.Builder());
-        }
-
-
-        profileBuilder.forStation(arrStationId).add(0L);
-
-
-        for (int i = connections.size() - 1; i >= 0; i--) {
-            int connId = i;
-
-            int depStopId = connections.depStopId(connId);
-            int arrStopId = connections.arrStopId(connId);
-            int depMins = connections.depMins(connId);
-            int arrMins = connections.arrMins(connId);
-            int tripId = connections.tripId(connId);
-
-            int depStationId = timeTable.stationId(depStopId);
-            int arrStationIdCon = timeTable.stationId(arrStopId);
-
-            long newCriterion = UNDEFINED;
-
-            ParetoFront.Builder tripBuilder = profileBuilder.forTrip(tripId);
-            long continuation = UNDEFINED;
-            if (tripBuilder != null) {
-                final long[] candidate = {UNDEFINED};  // Use an array to allow mutation in lambda
-                tripBuilder.build().forEach(criterion -> {
-                    if (PackedCriteria.arrMins(criterion) >= arrMins) {
-                        if (candidate[0] == UNDEFINED ||
-                                PackedCriteria.arrMins(criterion) < PackedCriteria.arrMins(candidate[0]) ||
-                                (PackedCriteria.arrMins(criterion) == PackedCriteria.arrMins(candidate[0]) && PackedCriteria.changes(criterion) < PackedCriteria.changes(candidate[0]))) {
-                            candidate[0] = criterion;
-                        }
-                    }
-                });
-                continuation = candidate[0];
-            }
-            if (continuation != UNDEFINED) {
-                int arrMinsBest = PackedCriteria.arrMins(continuation);
-                int changes = PackedCriteria.changes(continuation);
-                long criterionWithoutDepmins = PackedCriteria.pack(arrMinsBest, changes, Bits32_24_8.pack(connId, 0));
-                newCriterion=PackedCriteria.withDepMins(criterionWithoutDepmins, depMins);
-            }
-
-
-            ParetoFront.Builder arrStationBuilder = profileBuilder.forStation(arrStationIdCon);
-            long change = UNDEFINED;
-            if (arrStationBuilder != null) {
-                final long[] candidate = {UNDEFINED};  // Use an array to allow mutation in lambda
-                arrStationBuilder.build().forEach(criterion -> {
-                    if (PackedCriteria.arrMins(criterion) >= arrMins) {
-                        if (candidate[0] == UNDEFINED ||
-                                PackedCriteria.arrMins(criterion) < PackedCriteria.arrMins(candidate[0]) ||
-                                (PackedCriteria.arrMins(criterion) == PackedCriteria.arrMins(candidate[0]) && PackedCriteria.changes(criterion) < PackedCriteria.changes(candidate[0]))) {
-                            candidate[0] = criterion;
-                        }
-                    }
-                });
-                change = candidate[0];
-            }
-            if (change != UNDEFINED) {
-                int arrMinsBest = PackedCriteria.arrMins(change);
-                int changes = PackedCriteria.changes(change);
-                long criterionWithoutDepmins = PackedCriteria.pack(arrMinsBest, changes + 1, Bits32_24_8.pack(connId, 0));
-                long criterionWithChange = PackedCriteria.withDepMins(criterionWithoutDepmins, depMins);
-                newCriterion = selectBetterCriterion(newCriterion, criterionWithChange);
-            }
-
-
-            if (newCriterion != UNDEFINED) {
-                profileBuilder.forStation(depStationId).add(newCriterion);
-                profileBuilder.setForTrip(tripId, tripBuilder);
-                profileBuilder.forTrip(tripId).add(newCriterion);
-
-                for (int transferId = 0; transferId < transfers.size(); transferId++) {
-                    if (transfers.depStationId(transferId) == depStationId) {
-                        int toStationId = transfers.arrivingAt(transferId);
-                        int duration = transfers.minutes(transferId);
-
-                        int newDepMins = depMins - duration;
-                        if (newDepMins >= 0) {
-                            long CriterionWithoutDepMins = PackedCriteria.pack(
-                                    PackedCriteria.arrMins(newCriterion),
-                                    PackedCriteria.changes(newCriterion),
-                                    PackedCriteria.payload(newCriterion));
-                            long transferCriterion=PackedCriteria.withDepMins(CriterionWithoutDepMins,newDepMins);
-                            profileBuilder.forStation(toStationId).add(transferCriterion);
-                        }
-                    }
-                }
-            }
-        }
-
-        return profileBuilder.build();
+    public Profile profile(LocalDate date, int destStation) {
+        return new CSA(date, destStation).computeProfile();
     }
 
-    private static long selectBetterCriterion(long c1, long c2) {
-        if (c1 == UNDEFINED) return c2;
-        if (c2 == UNDEFINED) return c1;
+    private class CSA {
+        private final Connections connections;
+        private final Transfers transfers;
+        private final int[] walkTimes;
+        private final Profile.Builder profileBuilder;
 
-        int arr1 = PackedCriteria.arrMins(c1);
-        int arr2 = PackedCriteria.arrMins(c2);
-        if (arr1 != arr2) return arr1 < arr2 ? c1 : c2;
+        public CSA(LocalDate date, int destStation) {
+            this.connections = timeTable.connectionsFor(date);
+            this.transfers = timeTable.transfers();
+            int stationCount = timeTable.stations().size();
+            this.walkTimes = new int[stationCount];
+            for (int s = 0; s < stationCount; s++) {
+                try {
+                    walkTimes[s] = transfers.minutesBetween(s, destStation);
+                } catch (NoSuchElementException e) {
+                    walkTimes[s] = -1;
+                }
+            }
+            this.profileBuilder = new Profile.Builder(timeTable, date, destStation);
+            // Initialize frontiers for all stations.
+            for (int stationId = 0; stationId < stationCount; stationId++) {
+                profileBuilder.setForStation(stationId, new ParetoFront.Builder());
+            }
+            int tripCount = timeTable.tripsFor(date).size();
+            for (int tripId = 0; tripId < tripCount; tripId++) {
+                profileBuilder.setForTrip(tripId, new ParetoFront.Builder());
+            }
+            // Seed the destination station’s frontier properly.
+            long destSeed = PackedCriteria.withDepMins(PackedCriteria.pack(1440, 0, 0), 1440);
+            profileBuilder.forStation(destStation).add(destSeed);
+        }
 
-        int changes1 = PackedCriteria.changes(c1);
-        int changes2 = PackedCriteria.changes(c2);
-        return changes1 <= changes2 ? c1 : c2;
+        public Profile computeProfile() {
+            for (int connId = 0; connId < connections.size(); connId++) {
+                processConnection(connId);
+            }
+            return profileBuilder.build();
+        }
+
+        private void processConnection(int connId) {
+            int depStop = connections.depStopId(connId);
+            int arrStop = connections.arrStopId(connId);
+            int depStation = timeTable.stationId(depStop);
+            int arrStation = timeTable.stationId(arrStop);
+            int depTime = connections.depMins(connId);
+            int arrTime = connections.arrMins(connId);
+            int tripId = connections.tripId(connId);
+
+            ParetoFront.Builder frontier = new ParetoFront.Builder();
+
+            // Option 1: Walking option.
+            int transferTime = walkTimes[arrStation];
+            if (transferTime != -1) {
+                int candidateArrTime = arrTime + transferTime;
+                long tuple = PackedCriteria.pack(candidateArrTime, 0, Bits32_24_8.pack(connId, 0));
+                tuple = PackedCriteria.withDepMins(tuple, depTime);
+                frontier.add(tuple);
+            }
+
+            // Option 2: Continue with the same trip.
+            ParetoFront.Builder tripBuilder = getTripBuilder(tripId);
+            tripBuilder.forEach(frontier::add);
+
+            // Option 3: Change vehicle (transfer) at the arrival station.
+            ParetoFront.Builder arrivalBuilder = profileBuilder.forStation(arrStation);
+            if (arrivalBuilder != null) {
+                arrivalBuilder.forEach(tuple -> {
+                    if (((!PackedCriteria.hasDepMins(tuple)) || PackedCriteria.depMins(tuple) >= arrTime)
+                            && PackedCriteria.arrMins(tuple) >= arrTime) {
+                        int candidateArrTime = PackedCriteria.arrMins(tuple);
+                        int candidateChanges = PackedCriteria.changes(tuple) + 1;
+                        // Use the current connection as the starting leg for the transfer.
+                        int interStops = 0;
+                        long newTuple = PackedCriteria.pack(candidateArrTime, candidateChanges,
+                                Bits32_24_8.pack(connId, interStops));
+                        newTuple = PackedCriteria.withDepMins(newTuple, depTime);
+                        frontier.add(newTuple);
+                    }
+                });
+            }
+
+            // Option 4: Update the trip frontier.
+            getTripBuilder(tripId).addAll(frontier);
+
+            // Option 5: Update station frontiers via transfers.
+            int interval = transfers.arrivingAt(depStation);
+            int start = PackedRange.startInclusive(interval);
+            int end = PackedRange.endExclusive(interval);
+            for (int i = start; i < end; i++) {
+                int transferDepStation = transfers.depStationId(i);
+                int transferDuration = transfers.minutes(i);
+                int newDepTime = depTime - transferDuration;
+                // Only update if the new departure time is nonnegative.
+                if (newDepTime >= 0) {
+                    ParetoFront.Builder candidateBuilder = new ParetoFront.Builder();
+                    frontier.forEach(tuple -> {
+                        int candidateArrTime = PackedCriteria.arrMins(tuple);
+                        int candidateChanges = PackedCriteria.changes(tuple);
+                        long newTuple = PackedCriteria.pack(candidateArrTime, candidateChanges,
+                                PackedCriteria.payload(tuple));
+                        newTuple = PackedCriteria.withDepMins(newTuple, newDepTime);
+                        candidateBuilder.add(newTuple);
+                    });
+                    getStationBuilder(transferDepStation).addAll(candidateBuilder);
+                }
+            }
+// Self-transfer: update the departure station frontier.
+// Adjust tuples if their departure time equals the connection's depTime to force a foot leg.
+            ParetoFront.Builder adjustedFrontier = new ParetoFront.Builder();
+            frontier.forEach(tuple -> {
+                int candidateDep = PackedCriteria.depMins(tuple);
+                if (candidateDep == depTime && depTime > 0) {
+                    tuple = PackedCriteria.withDepMins(tuple, depTime - 1);
+                }
+                adjustedFrontier.add(tuple);
+            });
+            getStationBuilder(depStation).addAll(adjustedFrontier);
+
+        }
+
+        private ParetoFront.Builder getStationBuilder(int stationId) {
+            ParetoFront.Builder builder = profileBuilder.forStation(stationId);
+            if (builder == null) {
+                builder = new ParetoFront.Builder();
+                profileBuilder.setForStation(stationId, builder);
+            }
+            return builder;
+        }
+
+        private ParetoFront.Builder getTripBuilder(int tripId) {
+            ParetoFront.Builder builder = profileBuilder.forTrip(tripId);
+            if (builder == null) {
+                builder = new ParetoFront.Builder();
+                profileBuilder.setForTrip(tripId, builder);
+            }
+            return builder;
+        }
     }
 }

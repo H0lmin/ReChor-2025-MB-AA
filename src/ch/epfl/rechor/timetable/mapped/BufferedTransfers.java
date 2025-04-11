@@ -30,10 +30,18 @@ public class BufferedTransfers implements Transfers {
     private final int[] arrivingAtTable;
 
     /**
-     * Constructs a {@code BufferedTransfers} instance.
+     * Constructs a {@code BufferedTransfers} instance from the given {@link ByteBuffer}.
+     * <p>
+     * Initializes a {@link StructuredBuffer} from flattened transfer data (dep station ID, arr
+     * station ID, and transfer minutes) and builds an "arrivingAtTable" for fast lookup. First, it
+     * scans the transfers to determine the maximum arrival station ID, then groups consecutive
+     * transfers with the same arrival station, packing each group's start index and count using
+     * {@link Bits32_24_8#pack}.
+     * </p>
      *
-     * @param buffer the byte buffer containing the flattened platform data.
+     * @param buffer the byte buffer containing the flattened transfer data.
      */
+
     public BufferedTransfers(ByteBuffer buffer) {
         structuredBuffer = new StructuredBuffer(TRANSFERS_STRUCTURE, buffer);
         int n = structuredBuffer.size();
@@ -57,10 +65,6 @@ public class BufferedTransfers implements Transfers {
         }
     }
 
-    /**
-     * Private method to return the index of the arrival station for the transfer at the given
-     * index.
-     */
     private int arrStationId(int id) {
         return structuredBuffer.getU16(ARR_STATION_ID, id);
     }
@@ -132,9 +136,7 @@ public class BufferedTransfers implements Transfers {
     }
 
     /**
-     * Returns the number of transfers stored in the buffer.
-     *
-     * @return the number of transfers.
+     * @return the number of transfers stored in the buffer.
      */
     @Override
     public int size() {

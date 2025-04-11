@@ -39,9 +39,9 @@ public final class PackedCriteria {
 
         int arrTranslated = arrMins + TIME_TRANSLATION;
 
-        long arrPart = ((long) arrTranslated & ARR_MASK) << ARR_SHIFT;
-        long chgPart = ((long) changes & CHG_MASK) << CHG_SHIFT;
-        long payloadPart = Integer.toUnsignedLong(payload) & PAYLOAD_MASK;
+        long arrPart = (long) arrTranslated << ARR_SHIFT;
+        long chgPart = (long) changes << CHG_SHIFT;
+        long payloadPart = Integer.toUnsignedLong(payload);
 
         return arrPart | chgPart | payloadPart;
     }

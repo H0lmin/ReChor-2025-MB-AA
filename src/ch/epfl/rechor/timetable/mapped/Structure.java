@@ -2,18 +2,6 @@ package ch.epfl.rechor.timetable.mapped;
 
 import static ch.epfl.rechor.Preconditions.checkArgument;
 
-/**
- * Describes the layout of a record in a flattened timetable.
- * <p>
- * A Structure defines the order, type, and byte offset of each field in a record.
- * </p>
- * <p>
- * The class precomputes the offset of each field and the total record size.
- * </p>
- *
- * @author Amine AMIRA (393410)
- * @author Malak Berrada (379791)
- */
 public final class Structure {
 
     private final int[] fieldOffsets;

@@ -24,6 +24,17 @@ public class BufferedTrips implements Trips {
     private final List<String> stringTable;
     private final StructuredBuffer buffer;
 
+    /**
+     * Constructs a {@code BufferedTrips} instance.
+     * <p>
+     * Creates an immutable copy of the provided string table and initializes a
+     * {@link StructuredBuffer} with trip data from the given {@link ByteBuffer} using a predefined
+     * trip structure.
+     * </p>
+     *
+     * @param stringTable the list of strings for destination lookup
+     * @param buffer      the byte buffer containing flattened trip data
+     */
     public BufferedTrips(List<String> stringTable, ByteBuffer buffer) {
         this.stringTable = List.copyOf(stringTable);
         this.buffer = new StructuredBuffer(TRIPS_STRUCTURE, buffer);
@@ -53,9 +64,7 @@ public class BufferedTrips implements Trips {
     }
 
     /**
-     * Returns the number of trips stored in the buffer.
-     *
-     * @return the number of trips.
+     * @return the number of trips stored in the buffer.
      */
     @Override
     public int size() {

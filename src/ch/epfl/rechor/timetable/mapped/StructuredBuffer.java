@@ -40,9 +40,7 @@ public final class StructuredBuffer {
     }
 
     /**
-     * Returns the number of records stored in the buffer.
-     *
-     * @return the number of elements.
+     * @return the number of elements in the buffer.
      */
     public int size() {
         return size;

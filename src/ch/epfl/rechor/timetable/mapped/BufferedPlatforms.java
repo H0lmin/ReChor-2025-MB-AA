@@ -61,9 +61,7 @@ public final class BufferedPlatforms implements Platforms {
     }
 
     /**
-     * Returns the number of platform records stored in the buffer.
-     *
-     * @return the number of platforms.
+     * @return the number of platforms stored in the buffer.
      */
     @Override
     public int size() {

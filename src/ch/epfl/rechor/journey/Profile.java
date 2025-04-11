@@ -8,9 +8,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Record representing a Profile (using a timetable, a date, the id of the station of arrival and a
- * list of ParetoFront)
+ * Record representing a Profile
  *
+ * @param timeTable    the timetable associated with this profile
+ * @param date         the date for which the profile is valid
+ * @param arrStationId the identifier of the arrival station
+ * @param stationFront the list of ParetoFront objects, one for each station
  * @author Amine AMIRA (393410)
  * @author Malak Berrada (379791)
  */
@@ -19,6 +22,14 @@ public record Profile(TimeTable timeTable,
                       LocalDate date,
                       int arrStationId,
                       List<ParetoFront> stationFront) {
+
+    /**
+     * Compact constructor for {@code Profile}.
+     * <p>
+     * This constructor defensively copies the provided list of {@link ParetoFront} objects using
+     * {@code List.copyOf()} to guarantee that the {@code stationFront} field is immutable.
+     * </p>
+     */
     public Profile {
         stationFront = List.copyOf(stationFront);
     }
@@ -57,6 +68,18 @@ public record Profile(TimeTable timeTable,
         private final ParetoFront.Builder[] stationBuilders;
         private final ParetoFront.Builder[] tripBuilders;
 
+        /**
+         * Constructs a new {@code Builder} for creating a {@code Profile}.
+         * <p>
+         * This constructor initializes the builder with the specified {@link TimeTable},
+         * {@link LocalDate}, and arrival station identifier. It also creates arrays to hold
+         * {@link ParetoFront.Builder} instances for each station and for each trip.
+         * </p>
+         *
+         * @param timeTable    the timetable associated with the profile
+         * @param date         the date for which the profile is valid
+         * @param arrStationId the identifier of the arrival station
+         */
         public Builder(TimeTable timeTable, LocalDate date, int arrStationId) {
             this.timeTable = timeTable;
             this.date = date;

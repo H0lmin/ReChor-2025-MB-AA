@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * The {@code JourneyExtractor} class provides static methods to extract journey itineraries from a
@@ -179,22 +180,23 @@ public class JourneyExtractor {
                                                LocalDateTime currentTime) {
         int fromStation = tt.stationId(fromStopId);
         int toStation = tt.stationId(toStopId);
-        int walkingMinutes = tt.transfers().minutesBetween(fromStation, toStation);
+        int walkingMinutes;
+        try{
+            walkingMinutes = tt.transfers().minutesBetween(fromStation, toStation);
+        } catch (NoSuchElementException e){
+            walkingMinutes = -1;
+        }
 
         Stop fromStop = stopOf(tt, fromStopId);
         Stop toStop = stopOf(tt, toStopId);
 
-        LocalDateTime footArrTime = currentTime.plus(Duration.ofMinutes(walkingMinutes));
+        int effectiveWalking = Math.max(0, walkingMinutes);
+        LocalDateTime footArrTime = currentTime.plus(Duration.ofMinutes(effectiveWalking));
         return new Journey.Leg.Foot(fromStop, currentTime, toStop, footArrTime);
     }
 
     /**
      * Retrieves a {@link Stop} object for the given stop ID from the timetable.
-     *
-     * @param tt     the timetable instance.
-     * @param stopId the stop ID.
-     * @return a {@link Stop} object containing stop details such as name, platform name, longitude,
-     * and latitude.
      */
     private static Stop stopOf(TimeTable tt, int stopId) {
         int stationId = tt.stationId(stopId);

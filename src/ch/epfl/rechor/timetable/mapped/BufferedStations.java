@@ -89,9 +89,7 @@ public final class BufferedStations implements Stations {
     }
 
     /**
-     * Returns the total number of stations in the buffer.
-     *
-     * @return the number of stations.
+     * @return the total number of stations in the buffer.
      */
     @Override
     public int size() {

@@ -62,9 +62,7 @@ public final class BufferedStationAliases implements StationAliases {
     }
 
     /**
-     * Returns the total number of alias records.
-     *
-     * @return the number of alias records.
+     * @return the total number of alias records.
      */
     @Override
     public int size() {

@@ -28,7 +28,7 @@ public class BufferedConnections implements Connections {
             Structure.field(ARR_MINUTES, Structure.FieldType.U16),
             Structure.field(TRIP_POS_ID, Structure.FieldType.S32)
     );
-    
+
     private final StructuredBuffer structuredBuffer;
     private final IntBuffer nextBuffer;
 
@@ -124,9 +124,7 @@ public class BufferedConnections implements Connections {
     }
 
     /**
-     * Returns the number of connections stored in the buffer.
-     *
-     * @return the number of connections.
+     * @return the number of connections stored in the buffer.
      */
     @Override
     public int size() {

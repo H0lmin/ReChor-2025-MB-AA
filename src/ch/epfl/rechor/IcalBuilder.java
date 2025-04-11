@@ -88,13 +88,23 @@ public final class IcalBuilder {
      * Represents iCalendar components.
      */
     public enum Component {
-        VCALENDAR, VEVENT
+        VCALENDAR,
+        VEVENT
     }
 
     /**
      * Represents iCalendar property names.
      */
     public enum Name {
-        BEGIN, END, PRODID, VERSION, UID, DTSTAMP, DTSTART, DTEND, SUMMARY, DESCRIPTION
+        BEGIN,
+        END,
+        PRODID,
+        VERSION,
+        UID,
+        DTSTAMP,
+        DTSTART,
+        DTEND,
+        SUMMARY,
+        DESCRIPTION
     }
 }

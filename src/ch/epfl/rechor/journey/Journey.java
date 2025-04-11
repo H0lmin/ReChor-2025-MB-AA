@@ -46,8 +46,6 @@ public record Journey(List<Leg> legs) {
     }
 
     /**
-     * Returns the departure stop of the journey.
-     *
      * @return the departure stop of the journey.
      */
     public Stop depStop() {
@@ -55,36 +53,28 @@ public record Journey(List<Leg> legs) {
     }
 
     /**
-     * Returns the arrival stop of the journey.
-     *
-     * @return the stop at which the journey ends.
+     * @return the arrival stop of the journey.
      */
     public Stop arrStop() {
         return legs.getLast().arrStop();
     }
 
     /**
-     * Returns the departure time of the journey.
-     *
-     * @return the time when the journey begins.
+     * @return the departure time of the journey.
      */
     public LocalDateTime depTime() {
         return legs.getFirst().depTime();
     }
 
     /**
-     * Returns the arrival time of the journey.
-     *
-     * @return the time when the journey ends.
+     * @return the arrival time of the journey.
      */
     public LocalDateTime arrTime() {
         return legs.getLast().arrTime();
     }
 
     /**
-     * Returns the total duration of the journey.
-     *
-     * @return the duration between the departure time and the arrival time.
+     * @return The total duration of the journey : between the departure time and the arrival time.
      */
     public Duration duration() {
         return Duration.between(depTime(), arrTime());
@@ -99,30 +89,22 @@ public record Journey(List<Leg> legs) {
      */
     public sealed interface Leg {
         /**
-         * Returns the departure stop of this leg.
-         *
-         * @return the departure stop.
+         * @return the departure stop of this leg.
          */
         Stop depStop();
 
         /**
-         * Returns the departure time of this leg.
-         *
-         * @return the departure time.
+         * @return the departure time of this leg.
          */
         LocalDateTime depTime();
 
         /**
-         * Returns the arrival stop of this leg.
-         *
-         * @return the arrival stop.
+         * @return the arrival stop of this leg.
          */
         Stop arrStop();
 
         /**
-         * Returns the arrival time of this leg.
-         *
-         * @return the arrival time.
+         * @return the arrival time of this leg.
          */
         LocalDateTime arrTime();
 
@@ -138,9 +120,7 @@ public record Journey(List<Leg> legs) {
         List<IntermediateStop> intermediateStops();
 
         /**
-         * Returns the duration of this leg.
-         *
-         * @return the duration between the departure time and the arrival time.
+         * @return the duration of this leg : between the departure time and the arrival time.
          */
         default Duration duration() {
             return Duration.between(depTime(), arrTime());

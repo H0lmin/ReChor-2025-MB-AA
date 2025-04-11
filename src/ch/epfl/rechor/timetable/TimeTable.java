@@ -19,29 +19,21 @@ public interface TimeTable {
     Stations stations();
 
     /**
-     * Returns the alternate names (aliases) of the stations in this timetable.
-     *
-     * @return station's aliases.
+     * @return an instance of {@link StationAliases} containing stations' aliases.
      */
     StationAliases stationAliases();
 
     /**
-     * Returns all indexed platforms or tracks in this timetable.
-     *
-     * @return an instance of {@link StationAliases} containing stations' aliases.
+     * @return an instance of all indexed {@link Platforms} in this timetable.
      */
     Platforms platforms();
 
     /**
-     * Returns all indexed public transport routes in this timetable.
-     *
      * @return an instance of {@link Routes} containing all the routes.
      */
     Routes routes();
 
     /**
-     * Returns all indexed transfers in this timetable.
-     *
      * @return an instance of {@link Transfers} containing all the transfers.
      */
     Transfers transfers();
