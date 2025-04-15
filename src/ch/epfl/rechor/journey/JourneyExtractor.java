@@ -180,18 +180,13 @@ public class JourneyExtractor {
                                                LocalDateTime currentTime) {
         int fromStation = tt.stationId(fromStopId);
         int toStation = tt.stationId(toStopId);
-        int walkingMinutes;
-        try{
-            walkingMinutes = tt.transfers().minutesBetween(fromStation, toStation);
-        } catch (NoSuchElementException e){
-            walkingMinutes = -1;
-        }
+        int walkingMinutes = tt.transfers().minutesBetween(fromStation, toStation);
+
 
         Stop fromStop = stopOf(tt, fromStopId);
         Stop toStop = stopOf(tt, toStopId);
 
-        int effectiveWalking = Math.max(0, walkingMinutes);
-        LocalDateTime footArrTime = currentTime.plus(Duration.ofMinutes(effectiveWalking));
+        LocalDateTime footArrTime = currentTime.plus(Duration.ofMinutes(walkingMinutes));
         return new Journey.Leg.Foot(fromStop, currentTime, toStop, footArrTime);
     }
 
@@ -222,7 +217,8 @@ public class JourneyExtractor {
      * @param newCurrentTime    the updated time after completing the leg.
      * @param newCurrentStation the updated stop ID after completing the leg.
      */
-    private record LegExtractionResult(Journey.Leg.Transport leg, LocalDateTime newCurrentTime,
+    private record LegExtractionResult(Journey.Leg.Transport leg,
+                                             LocalDateTime newCurrentTime,
                                        int newCurrentStation) {
     }
 }

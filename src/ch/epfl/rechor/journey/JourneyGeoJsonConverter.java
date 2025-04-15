@@ -2,9 +2,7 @@ package ch.epfl.rechor.journey;
 
 import ch.epfl.rechor.Json;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class JourneyGeoJsonConverter {
 
@@ -14,7 +12,16 @@ public final class JourneyGeoJsonConverter {
         return Math.round(value * 1e5) / 1e5;
     }
 
+    /**
+     * Converts the provided Journey into a GeoJSON document (as a String) representing a LineString.
+     *
+     * @param journey the journey to convert.
+     * @return a compact JSON string (with no extra whitespace) representing the journey route.
+     * @throws NullPointerException if journey is null.
+     */
     public static String toGeoJson(Journey journey) {
+        Objects.requireNonNull(journey);
+
         List<Stop> stops = new ArrayList<>();
         List<Journey.Leg> legs = journey.legs();
 
@@ -29,8 +36,10 @@ public final class JourneyGeoJsonConverter {
             stops.add(leg.arrStop());
         }
 
+        // Build a list of coordinate pairs, each as a Json.JArray containing the rounded [longitude, latitude].
         Json geoJson = getJson(stops);
 
+        // Return the JSON text; assuming each Json type toString() produces a compact representation.
         return geoJson.toString();
     }
 
@@ -50,16 +59,18 @@ public final class JourneyGeoJsonConverter {
             lastLon = lon;
             lastLat = lat;
 
+            // Create a coordinate pair [lon, lat] as a Json array.
             coordinatePairs.add(new Json.JArray(List.of(
                     new Json.JNumber(lon),
                     new Json.JNumber(lat)
             )));
         }
 
-        Json geoJson = new Json.JObject(Map.of(
-                "type", new Json.JString("LineString"),
-                "coordinates", new Json.JArray(coordinatePairs)
-        ));
-        return geoJson;
+        // Use a LinkedHashMap to preserve the insertion order.
+        LinkedHashMap<String, Json> orderedMap = new LinkedHashMap<>();
+        orderedMap.put("type", new Json.JString("LineString"));
+        orderedMap.put("coordinates", new Json.JArray(coordinatePairs));
+
+        return new Json.JObject(orderedMap);
     }
 }
