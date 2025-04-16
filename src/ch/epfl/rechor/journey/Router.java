@@ -5,10 +5,11 @@ import ch.epfl.rechor.PackedRange;
 import ch.epfl.rechor.timetable.Connections;
 import ch.epfl.rechor.timetable.TimeTable;
 import ch.epfl.rechor.timetable.Transfers;
-import ch.epfl.rechor.timetable.Trips;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+
+import static ch.epfl.rechor.journey.PackedCriteria.*;
 
 public record Router(TimeTable timeTable) {
 
@@ -23,86 +24,93 @@ public record Router(TimeTable timeTable) {
             int start = PackedRange.startInclusive(interval);
             int end = PackedRange.endExclusive(interval);
             for (int i = start; i < end; i++) {
-                int depStation = transfers.depStationId(i);
-                int time = transfers.minutes(i);
-                walkingTimes[depStation] = time;
+                walkingTimes[transfers.depStationId(i)] = transfers.minutes(i);
             }
         } catch (IndexOutOfBoundsException ignored) {
         }
 
-        Trips trips = timeTable.tripsFor(date);
         Connections conns = timeTable.connectionsFor(date);
 
-        ParetoFront.Builder[] stationBuilders = new ParetoFront.Builder[numStations];
-        ParetoFront.Builder[] tripBuilders = new ParetoFront.Builder[trips.size()];
+        Profile.Builder profileBuilder = new Profile.Builder(timeTable, date, destStation);
 
-        for (int i = 0; i < conns.size(); i++) {
-            int depStop = conns.depStopId(i);
-            int arrStop = conns.arrStopId(i);
-            int h_dep = conns.depMins(i);
-            int h_arr = conns.arrMins(i);
-            int tripId = conns.tripId(i);
+        for (int connId = 0; connId < conns.size(); connId++) {
+            int depStop  = conns.depStopId(connId);
+            int arrStop  = conns.arrStopId(connId);
+            int h_dep    = conns.depMins(connId);
+            int h_arr    = conns.arrMins(connId);
+            int tripId   = conns.tripId(connId);
+            int payloadT = connId;
+            int payload  = Bits32_24_8.pack(connId, 0);
 
             ParetoFront.Builder f = new ParetoFront.Builder();
 
-            int stationArr = timeTable.stationId(arrStop);
-            int walkTime = walkingTimes[stationArr];
-            if (walkTime >= 0) {
+            // Option 1: walk from arrival to destination
+            int arrStationId = timeTable.stationId(arrStop);
+            int walkTime   = walkingTimes[arrStationId];
+            if (walkTime != -1) {
                 int candidateTime = h_arr + walkTime;
-                int payload = Bits32_24_8.pack(i, 0);
                 f.add(candidateTime, 0, payload);
             }
 
-            if (tripBuilders[tripId] != null) {
-                tripBuilders[tripId].forEach(f::add);
+            // Option 2: continue on same trip
+            ParetoFront.Builder tripFront = profileBuilder.forTrip(tripId);
+            if (tripFront != null) {
+                f.addAll(tripFront);
             }
 
-            if (stationBuilders[stationArr] != null) {
-                int finalI = i;
-                stationBuilders[stationArr].forEach(t -> {
-                    if (PackedCriteria.hasDepMins(t)) {
-                        int t_dep = PackedCriteria.depMins(t);
-                        if (t_dep >= h_arr) {
-                            int newChanges = PackedCriteria.changes(t) + 1;
-                            int payload = Bits32_24_8.pack(finalI, 0);
-                            int arrCandidate = PackedCriteria.arrMins(t);
-                            f.add(arrCandidate, newChanges, payload);
-                        }
-                    }
-                });
+            // Option 3: change at station
+            if (profileBuilder.forStation(arrStationId) ==  null) {
+                profileBuilder.setForStation(arrStationId, new ParetoFront.Builder());
             }
+
+            profileBuilder.forStation(arrStationId).forEach(tuple -> {
+                if (PackedCriteria.hasDepMins(tuple)) {
+                    int t_dep      = PackedCriteria.depMins(tuple);
+                    if (t_dep >= h_arr) {
+                        f.add(withPayload(withoutDepMins(withAdditionalChange(tuple)), payload));
+                    }
+                }
+            });
 
             if (f.isEmpty()) continue;
 
-            if (tripBuilders[tripId] == null) {
-                tripBuilders[tripId] = new ParetoFront.Builder();
+            // Update trip frontier
+            tripFront = profileBuilder.forTrip(tripId);
+            if (tripFront == null) {
+                tripFront = new ParetoFront.Builder();
+                profileBuilder.setForTrip(tripId, tripFront);
             }
-            tripBuilders[tripId].addAll(f);
+            tripFront.addAll(f);
 
-            int stationDep = timeTable.stationId(depStop);
-            int interval = transfers.arrivingAt(stationDep);
-            int start = PackedRange.startInclusive(interval);
-            int end = PackedRange.endExclusive(interval);
+            // Update station frontiers with full-dominance optimization
+            int depStationId = timeTable.stationId(depStop);
+            int interval    = transfers.arrivingAt(depStationId);
+            int start       = PackedRange.startInclusive(interval);
+            int end         = PackedRange.endExclusive(interval);
             for (int j = start; j < end; j++) {
                 int originStation = transfers.depStationId(j);
-                int transferTime = transfers.minutes(j);
-                int d = h_dep - transferTime;
-                if (stationBuilders[originStation] == null) {
-                    stationBuilders[originStation] = new ParetoFront.Builder();
+                int transferTime  = transfers.minutes(j);
+                int newDep = h_dep - transferTime;
+
+                if (profileBuilder.forStation(originStation) == null) {
+                    profileBuilder.setForStation(originStation, new ParetoFront.Builder());
+                } else if (profileBuilder.forStation(originStation).fullyDominates(f, newDep)) {
+                    continue;
                 }
+
                 f.forEach(t -> {
-                    long newTuple = PackedCriteria.withDepMins(t, d);
-                    stationBuilders[originStation].add(newTuple);
+                    int packedPayload    = PackedCriteria.payload(t);
+                    int tupleConnId      = Bits32_24_8.unpack24(packedPayload);
+                    int numInterStops    = conns.tripPos(tupleConnId) - conns.tripPos(payloadT);
+                    int effectivePayload = Bits32_24_8.pack(payloadT, numInterStops);
+                    long newTuple = PackedCriteria.withPayload(
+                            PackedCriteria.withDepMins(t, newDep), effectivePayload
+                    );
+                    profileBuilder.forStation(originStation).add(newTuple);
                 });
             }
         }
 
-        Profile.Builder profileBuilder = new Profile.Builder(timeTable, date, destStation);
-        for (int s = 0; s < numStations; s++) {
-            if (stationBuilders[s] != null) {
-                profileBuilder.setForStation(s, stationBuilders[s]);
-            }
-        }
         return profileBuilder.build();
     }
 }

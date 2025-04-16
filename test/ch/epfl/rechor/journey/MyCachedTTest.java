@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.Month;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -45,11 +46,18 @@ public final class MyCachedTTest {
         int depStationId = stationId(stations, "Ecublens VD, EPFL");
         int arrStationId = stationId(stations, "Gruyères");
         Router router = new Router(timeTable);
-        Profile profile = router.profile(date, arrStationId);
-        Journey journey = JourneyExtractor
-                .journeys(profile, depStationId)
-                .get(32);
-        System.out.println(JourneyIcalConverter.toIcalendar(journey));
+        try{
+            for (int i = arrStationId; i < arrStationId + 7 ; i++) {
+                Profile profile = router.profile(date, i);
+                List<Journey> js = JourneyExtractor.journeys(profile, depStationId);
+                for (int l = 0; l < js.toArray().length; l++) {
+                    String j = JourneyIcalConverter.toIcalendar(js.get(l));
+                    System.out.println(j);
+                }
+            }
+        } catch (IndexOutOfBoundsException e){
+            System.out.println("Tfou ma khedamch");
+        }
 
         double elapsed = (System.nanoTime() - tStart) * 1e-9;
         System.out.printf("Temps écoulé : %.3f s%n", elapsed);

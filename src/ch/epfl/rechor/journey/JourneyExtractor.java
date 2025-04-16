@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  * The {@code JourneyExtractor} class provides static methods to extract journey itineraries from a
