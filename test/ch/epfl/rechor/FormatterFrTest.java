@@ -120,6 +120,7 @@ class FormatterFrTest {
         var r = "IC 1";
         var h = "Rorschach";
         var l = new Journey.Leg.Transport(dS, dT, aS, aT, List.of(), Vehicle.TRAIN, r, h);
+        System.out.println(FormatterFr.formatRouteDestination(l));
         assertEquals(r + " Direction " + h, FormatterFr.formatRouteDestination(l));
     }
 }

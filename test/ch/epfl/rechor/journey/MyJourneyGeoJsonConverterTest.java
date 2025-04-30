@@ -2,6 +2,7 @@ package ch.epfl.rechor.journey;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import ch.epfl.rechor.Json;
 import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -43,9 +44,9 @@ public class MyJourneyGeoJsonConverterTest {
 
         Journey journey = new Journey(List.of(leg1, leg2));
 
-        String geoJson = JourneyGeoJsonConverter.toGeoJson(journey);
+        Json geoJson = JourneyGeoJsonConverter.toGeoJson(journey);
         String expected = "{\"type\":\"LineString\",\"coordinates\":[[6.62909,46.51679],[6.83787,46.54276],[6.91181,46.69351]]}";
-        assertEquals(expected, geoJson);
+        assertEquals(expected, geoJson.toString());
     }
 
     /**
@@ -87,10 +88,10 @@ public class MyJourneyGeoJsonConverterTest {
         Journey.Leg.Foot leg3 = new Journey.Leg.Foot(B, t5, C, t6);
 
         Journey journey = new Journey(List.of(leg1, leg2, leg3));
-        String geoJson = JourneyGeoJsonConverter.toGeoJson(journey);
+        Json geoJson = JourneyGeoJsonConverter.toGeoJson(journey);
         // Expected stops: A, B, C (duplicate B removed).
         String expected = "{\"type\":\"LineString\",\"coordinates\":[[6.62909,46.51679],[6.83787,46.54276],[6.91181,46.69351]]}";
-        assertEquals(expected, geoJson);
+        assertEquals(expected, geoJson.toString());
     }
 
     /**
@@ -110,10 +111,10 @@ public class MyJourneyGeoJsonConverterTest {
         Journey.Leg.Foot leg = new Journey.Leg.Foot(A, t1, B, t2);
         Journey journey = new Journey(List.of(leg));
 
-        String geoJson = JourneyGeoJsonConverter.toGeoJson(journey);
+        Json geoJson = JourneyGeoJsonConverter.toGeoJson(journey);
         // Expected: A rounds to [6.12346,46.87654], B rounds to [7.98765,47.12346]
         String expected = "{\"type\":\"LineString\",\"coordinates\":[[6.12346,46.87654],[7.98765,47.12346]]}";
-        assertEquals(expected, geoJson);
+        assertEquals(expected, geoJson.toString());
     }
 
     /**
@@ -148,10 +149,10 @@ public class MyJourneyGeoJsonConverterTest {
         );
         Journey journey = new Journey(List.of(leg));
 
-        String geoJson = JourneyGeoJsonConverter.toGeoJson(journey);
+        Json geoJson = JourneyGeoJsonConverter.toGeoJson(journey);
         // Expected stops: dep, inter, arr.
         String expected = "{\"type\":\"LineString\",\"coordinates\":[[6.0,46.0],[6.5,46.5],[7.0,47.0]]}";
-        assertEquals(expected, geoJson);
+        assertEquals(expected, geoJson.toString());
     }
 
     /**
@@ -176,9 +177,9 @@ public class MyJourneyGeoJsonConverterTest {
         Journey.Leg.Foot leg = new Journey.Leg.Foot(A, t1, B, t2);
         Journey journey = new Journey(List.of(leg));
 
-        String geoJson = JourneyGeoJsonConverter.toGeoJson(journey);
+        Json geoJson = JourneyGeoJsonConverter.toGeoJson(journey);
         // Expected: A rounds to [6.12346,46.87654], B rounds to [7.98765,47.12346]
         String expected = "{\"type\":\"LineString\",\"coordinates\":[[6.12346,46.87654],[7.98765,47.12346]]}";
-        assertEquals(expected, geoJson);
+        assertEquals(expected, geoJson.toString());
     }
 }

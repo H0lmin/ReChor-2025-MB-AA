@@ -48,7 +48,7 @@ public final class MyCachedTTest {
         Router router = new Router(timeTable);
         try{
             for (int i = arrStationId; i < arrStationId + 7 ; i++) {
-                Profile profile = router.profile(date, i);
+                Profile profile = router.profile(date, arrStationId);
                 List<Journey> js = JourneyExtractor.journeys(profile, depStationId);
                 for (int l = 0; l < js.toArray().length; l++) {
                     String j = JourneyIcalConverter.toIcalendar(js.get(l));

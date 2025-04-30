@@ -35,7 +35,7 @@ public final class TestDetailUI extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         TimeTable timeTable = new CachedTimeTable(
-                FileTimeTable.in(Path.of("timetable")));
+                FileTimeTable.in(Path.of("timetable16")));
         Stations stations = timeTable.stations();
         LocalDate date = LocalDate.of(2025, Month.APRIL, 15);
         int depStationId = stationId(stations, "Ecublens VD, EPFL");

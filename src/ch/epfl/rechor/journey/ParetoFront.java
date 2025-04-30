@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.function.LongConsumer;
 
-import static java.lang.System.arraycopy;
+import static ch.epfl.rechor.journey.PackedCriteria.*;
 
 /**
  * Represents a Pareto frontier for journey criteria.
@@ -22,7 +22,7 @@ public final class ParetoFront {
     private final long[] tupleFront;
 
     private ParetoFront(long[] tupleFront) {
-        this.tupleFront = tupleFront.clone();
+        this.tupleFront = tupleFront;
     }
 
     /**
@@ -42,7 +42,7 @@ public final class ParetoFront {
      */
     public long get(int arrMins, int changes) {
         for (long tuple : tupleFront) {
-            if (PackedCriteria.arrMins(tuple) == arrMins && PackedCriteria.changes(tuple) == changes) {
+            if (arrMins(tuple) == arrMins && changes(tuple) == changes) {
                 return tuple;
             }
         }
@@ -127,40 +127,60 @@ public final class ParetoFront {
             long newOrder = orderValue(newTuple);
             int insertionPos = 0;
 
-            // Find insertion point and check if newTuple is already dominated.
+            // 1) Find insertion point; reject if same (arrMins,changes) or dominated
             while (insertionPos < size) {
-                long currentOrder = orderValue(frontier[insertionPos]);
+                long current = frontier[insertionPos];
+                long currentOrder = orderValue(current);
+
                 if (currentOrder >= newOrder) {
                     break;
                 }
-                if (PackedCriteria.dominatesOrIsEqual(frontier[insertionPos], newTuple)) {
+
+                if (arrMins(current) == arrMins(newTuple)
+                        && changes(current) == changes(newTuple)) {
+                    return this;
+                }
+
+                if (dominatesOrIsEqual(current, newTuple)) {
                     return this;
                 }
                 insertionPos++;
             }
 
-            // Remove tuples that are dominated by newTuple.
+            // 2) Remove any tuples dominated by newTuple; also reject duplicates in tail
             int newSize = insertionPos;
             for (int j = insertionPos; j < size; j++) {
-                if (!PackedCriteria.dominatesOrIsEqual(newTuple, frontier[j])) {
-                    frontier[newSize++] = frontier[j];
+                long current = frontier[j];
+
+                if (arrMins(current) == arrMins(newTuple)
+                        && changes(current) == changes(newTuple)) {
+                    return this;
+                }
+
+                if (!dominatesOrIsEqual(newTuple, current)) {
+                    frontier[newSize++] = current;
                 }
             }
 
-            // Ensure there is capacity for the new tuple.
+            // 3) Ensure capacity
             if (newSize + 1 > frontier.length) {
                 frontier = Arrays.copyOf(frontier, (int) (frontier.length * 1.5));
             }
 
-            // Shift elements to make room for newTuple.
+            // 4) Shift tail to make room
             int tailLength = newSize - insertionPos;
             if (tailLength > 0) {
-                arraycopy(frontier, insertionPos, frontier, insertionPos + 1, tailLength);
+                System.arraycopy(frontier, insertionPos,
+                        frontier, insertionPos + 1,
+                        tailLength);
             }
+
+            // 5) Insert and update size
             frontier[insertionPos] = newTuple;
             size = newSize + 1;
             return this;
         }
+
 
         /**
          * Adds a new tuple to the frontier using individual criteria values.
@@ -203,7 +223,7 @@ public final class ParetoFront {
             int j = 0;
             for (int i = 0; i < that.size; i++) {
                 long tupleWithDep = PackedCriteria.withDepMins(that.frontier[i], depMins);
-                while (j < this.size && !PackedCriteria.dominatesOrIsEqual(this.frontier[j],
+                while (j < this.size && !dominatesOrIsEqual(this.frontier[j],
                         tupleWithDep)) {
                     j++;
                 }

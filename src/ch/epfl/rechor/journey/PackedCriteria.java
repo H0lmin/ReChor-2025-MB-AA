@@ -25,6 +25,23 @@ public final class PackedCriteria {
     private PackedCriteria() {
     }
 
+    // Helpers for translating and complementing minutes values
+    private static int encodeArrMins(int arrMins) {
+        return arrMins + TIME_TRANSLATION;
+    }
+
+    private static int decodeArrMins(int storedArr) {
+        return storedArr - TIME_TRANSLATION;
+    }
+
+    private static int encodeDepMins(int depMins) {
+        return MAX_STORED_TIME - encodeArrMins(depMins);
+    }
+
+    private static int decodeDepMins(int storedDep) {
+        return (MAX_STORED_TIME - storedDep) - TIME_TRANSLATION;
+    }
+
     /**
      * Packs the arrival time, number of changes, and payload into a 64-bit long.
      *
@@ -37,8 +54,7 @@ public final class PackedCriteria {
         checkArgument(arrMins >= -TIME_TRANSLATION && arrMins < 2880);
         checkArgument(changes >= 0 && changes < 128);
 
-        int arrTranslated = arrMins + TIME_TRANSLATION;
-
+        int arrTranslated = encodeArrMins(arrMins);
         long arrPart = (long) arrTranslated << ARR_SHIFT;
         long chgPart = (long) changes << CHG_SHIFT;
         long payloadPart = Integer.toUnsignedLong(payload);
@@ -50,24 +66,22 @@ public final class PackedCriteria {
      * Returns true if the packed criteria include a departure time.
      *
      * @param criteria the packed criteria
-     * @return true if departure time bits (bits 62–51) are nonzero, false otherwise
+     * @return true if departure time bits (bits 62–51) are nonzero
      */
     public static boolean hasDepMins(long criteria) {
         return ((criteria >>> DEP_SHIFT) & DEP_MASK) != 0;
     }
 
     /**
-     * Retrieves the departure time (in minutes since midnight) from the packed criteria. The
-     * departure time is stored as the complement relative to MAX_STORED_TIME.
+     * Retrieves the departure time (in minutes since midnight) from the packed criteria.
      *
      * @param criteria the packed criteria
-     * @throws IllegalArgumentException if the criteria do not include a departure time
+     * @throws IllegalArgumentException if no departure time is stored
      */
     public static int depMins(long criteria) {
         checkArgument(hasDepMins(criteria));
-
         int storedDep = (int) ((criteria >>> DEP_SHIFT) & DEP_MASK);
-        return (MAX_STORED_TIME - storedDep) - TIME_TRANSLATION;
+        return decodeDepMins(storedDep);
     }
 
     /**
@@ -78,7 +92,7 @@ public final class PackedCriteria {
      */
     public static int arrMins(long criteria) {
         int storedArr = (int) ((criteria >>> ARR_SHIFT) & ARR_MASK);
-        return storedArr - TIME_TRANSLATION;
+        return decodeArrMins(storedArr);
     }
 
     /**
@@ -106,21 +120,20 @@ public final class PackedCriteria {
      *
      * @param criteria1 the first packed criteria
      * @param criteria2 the second packed criteria
-     * @return true if criteria1 dominates or is equal to criteria2
-     * @throws IllegalArgumentException if one criteria includes a departure time and the other does
-     *                                  not
+     * @throws IllegalArgumentException if departure presence differs
      */
     public static boolean dominatesOrIsEqual(long criteria1, long criteria2) {
         checkArgument(hasDepMins(criteria1) == hasDepMins(criteria2));
 
         if (hasDepMins(criteria1)) {
-            return (depMins(criteria1) >= depMins(criteria2)) && arrMins(criteria1) <= arrMins(criteria2) &&
-                    changes(criteria1) <= changes(criteria2);
+            return (depMins(criteria1) >= depMins(criteria2))
+                    && arrMins(criteria1) <= arrMins(criteria2)
+                    && changes(criteria1) <= changes(criteria2);
         } else {
-            return arrMins(criteria1) <= arrMins(criteria2) && changes(criteria1) <= changes(criteria2);
+            return arrMins(criteria1) <= arrMins(criteria2)
+                    && changes(criteria1) <= changes(criteria2);
         }
     }
-
 
     /**
      * Returns packed criteria identical to the given ones but with no departure time.
@@ -134,30 +147,27 @@ public final class PackedCriteria {
 
     /**
      * Returns packed criteria identical to the given ones but with the specified departure time.
-     * The departure time is provided in minutes since midnight and will be stored as its
-     * complement.
      *
      * @param criteria the original packed criteria
      * @param depMins1 the new departure time in minutes since midnight; must be in [-240, 2880)
      * @return the criteria with the updated departure time
      */
     public static long withDepMins(long criteria, int depMins1) {
-        int storedDep = MAX_STORED_TIME - (depMins1 + TIME_TRANSLATION);
-        return (criteria & ~(DEP_MASK << DEP_SHIFT)) | (((long) storedDep & DEP_MASK) << DEP_SHIFT);
+        int storedDep = encodeDepMins(depMins1);
+        return (criteria & ~(DEP_MASK << DEP_SHIFT))
+                | (((long) storedDep & DEP_MASK) << DEP_SHIFT);
     }
 
     /**
      * Returns packed criteria identical to the given ones but with one additional change.
      *
      * @param criteria the original packed criteria
-     * @return the criteria with the number of changes incremented by 1
      * @throws IllegalArgumentException if the number of changes would exceed 127
      */
     public static long withAdditionalChange(long criteria) {
-        int currentChanges = changes(criteria);
-
-        int newChanges = currentChanges + 1;
-        return (criteria & ~(CHG_MASK << CHG_SHIFT)) | (((long) newChanges & CHG_MASK) << CHG_SHIFT);
+        int newChanges = changes(criteria) + 1;
+        return (criteria & ~(CHG_MASK << CHG_SHIFT))
+                | (((long) newChanges & CHG_MASK) << CHG_SHIFT);
     }
 
     /**

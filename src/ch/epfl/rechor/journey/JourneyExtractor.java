@@ -128,7 +128,7 @@ public class JourneyExtractor {
         }
 
         int routeId = profile.trips().routeId(current.tripId());
-        String route = String.valueOf(routeId);
+        String route = tt.routes().name(routeId);
         String destination = profile.trips().destination(current.tripId());
 
         Journey.Leg.Transport leg = new Journey.Leg.Transport(

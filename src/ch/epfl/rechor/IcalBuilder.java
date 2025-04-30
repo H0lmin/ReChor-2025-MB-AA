@@ -8,45 +8,47 @@ import java.util.List;
 import static ch.epfl.rechor.Preconditions.checkArgument;
 
 /**
- * A builder for creating iCalendar (.ics) content.
+ * A builder for creating iCalendar content.
  *
  * @author Amine AMIRA (393410)
  * @author Malak Berrada (379791)
  */
 public final class IcalBuilder {
+    private static final int MAX_LINE_LENGTH = 75;
+    private static final DateTimeFormatter ICAL_DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
+
     private final StringBuilder calendarContent = new StringBuilder();
     private final List<Component> componentsInProgress = new ArrayList<>();
 
     /**
      * Folds a line to fit iCalendar's 75-character limit.
+     * inserting CRLF and a single space at the start of each continued line.
+     *
+     * @param value the logical line to fold
+     * @return the folded line string
      */
     private String foldLine(String value) {
         StringBuilder sb = new StringBuilder();
         int start = 0;
         int length = value.length();
-
         while (start < length) {
-            int end = Math.min(start + 74, length);
+            int end = Math.min(start + MAX_LINE_LENGTH - 1, length);
             sb.append(value, start, end);
-            if (end < length) sb.append("\r\n ");
+            if (end < length) {
+                sb.append("\r\n ");
+            }
             start = end;
         }
         return sb.toString();
     }
 
     /**
-     * Formats a LocalDateTime to iCalendar's date-time format.
-     */
-    private String formatIcalTime(LocalDateTime dateTime) {
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
-        return dateTime.format(fmt);
-    }
-
-    /**
      * Adds a property with a string value to the calendar.
      */
     public IcalBuilder add(Name name, String value) {
-        calendarContent.append(foldLine(name.name() + ":" + value)).append("\r\n");
+        String line = name.name() + ":" + value;
+        calendarContent.append(foldLine(line)).append("\r\n");
         return this;
     }
 
@@ -54,7 +56,7 @@ public final class IcalBuilder {
      * Adds a property with a LocalDateTime value to the calendar.
      */
     public IcalBuilder add(Name name, LocalDateTime dateTime) {
-        return add(name, formatIcalTime(dateTime));
+        return add(name, dateTime.format(ICAL_DATE_TIME_FORMATTER));
     }
 
     /**
@@ -62,8 +64,7 @@ public final class IcalBuilder {
      */
     public IcalBuilder begin(Component component) {
         componentsInProgress.add(component);
-        calendarContent.append("BEGIN:").append(component.name()).append("\r\n");
-        return this;
+        return add(Name.BEGIN, component.name());
     }
 
     /**
@@ -72,8 +73,7 @@ public final class IcalBuilder {
     public IcalBuilder end() {
         checkArgument(!componentsInProgress.isEmpty());
         Component component = componentsInProgress.removeLast();
-        calendarContent.append("END:").append(component.name()).append("\r\n");
-        return this;
+        return add(Name.END, component.name());
     }
 
     /**

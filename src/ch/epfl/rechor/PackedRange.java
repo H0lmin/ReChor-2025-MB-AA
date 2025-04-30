@@ -25,14 +25,14 @@ public class PackedRange {
      * Returns the length of the range.
      */
     public static int length(int interval) {
-        return interval & 0xFF;
+        return Bits32_24_8.unpack8(interval);
     }
 
     /**
      * Returns the start value of the range.
      */
     public static int startInclusive(int interval) {
-        return interval >>> 8;
+        return Bits32_24_8.unpack24(interval);
     }
 
     /**

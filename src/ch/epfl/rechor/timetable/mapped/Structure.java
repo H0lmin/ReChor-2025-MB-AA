@@ -2,6 +2,22 @@ package ch.epfl.rechor.timetable.mapped;
 
 import static ch.epfl.rechor.Preconditions.checkArgument;
 
+/**
+ * Defines the layout of a structured record by specifying its fields and computing their byte offsets.
+ *
+ * <p>A {@code Structure} is defined by an ordered sequence of {@link Field fields}, each having:
+ * <ul>
+ *   <li>An index matching its position in the sequence,</li>
+ *   <li>A type ({@code U8}, {@code U16}, or {@code S32}).</li>
+ * </ul>
+ * The constructor validates the ordering and computes an array of byte offsets
+ * and the total size of the record.</p>
+ *
+ * <p>This class is immutable and thread-safe.</p>
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
+ */
 public final class Structure {
 
     private final int[] fieldOffsets;
@@ -9,18 +25,11 @@ public final class Structure {
 
     /**
      * Constructs a new {@code Structure} with the specified fields.
-     * <p>
-     * The fields must be provided in order. In particular, the field at position <em>i</em> must
-     * have an index of
-     * <em>i</em>.
-     * </p>
      *
-     * @param fields the fields that define the record layout.
-     * @throws IllegalArgumentException if the fields are not provided in order (i.e., if a field's
-     *                                  index does not match its position).
+     * @param fields the fields defining the record layout, in index order
+     * @throws IllegalArgumentException if any field's index does not match its position
      */
     public Structure(Field... fields) {
-
         for (int i = 0; i < fields.length; i++) {
             checkArgument(fields[i].index() == i);
         }
@@ -40,63 +49,63 @@ public final class Structure {
     }
 
     /**
-     * Creates a new {@code Field} instance with the given index and type.
+     * Creates a new {@link Field} instance with the given index and type.
      *
-     * @param index the index of the field in the structure .
-     * @param type  the type of the field; must not be {@code null}.
-     * @return a new {@code Field} instance.
+     * @param index the index of the field in the structure
+     * @param type  the type of the field; must not be {@code null}
+     * @return a new {@code Field} object
      */
     public static Field field(int index, FieldType type) {
         return new Field(index, type);
     }
 
     /**
-     * Returns the total size in bytes of one record defined by this structure.
+     * Returns the total size (in bytes) of one record defined by this structure.
      *
-     * @return the total number of bytes in a record.
+     * @return the number of bytes per record
      */
     public int totalSize() {
         return totalSize;
     }
 
     /**
-     * Returns the offset (in bytes) of a specific field for the element at the given index in a
-     * binary array.
+     * Computes the byte offset of a given field within a specific record element.
      *
-     * @param fieldIndex   the index of the field in the structure.
-     * @param elementIndex the index of the record within the binary array.
-     * @return the byte offset of the specified field.
+     * @param fieldIndex   the index of the field in the structure
+     * @param elementIndex the index of the record within the buffer
+     * @return the byte offset of the field
      */
     public int offset(int fieldIndex, int elementIndex) {
         return elementIndex * totalSize + fieldOffsets[fieldIndex];
     }
 
     /**
-     * Enumerates the supported field types.
+     * Supported primitive field types with fixed byte sizes.
      */
     public enum FieldType {
+        /** Unsigned 8-bit integer (1 byte) */
         U8,
+        /** Unsigned 16-bit integer (2 bytes) */
         U16,
+        /** Signed 32-bit integer (4 bytes) */
         S32
     }
 
     /**
-     * Represents a field in a flattened record.
+     * Represents a single field in the record layout.
      *
-     * @param index the index of the field within the record.
-     * @param type  the type of the field; must not be {@code null}.
+     * @param index the position of the field in the structure
+     * @param type  the primitive type of the field; must not be {@code null}
      */
     public record Field(int index, FieldType type) {
         /**
-         * Constructs a new {@code Field} with the specified index and type.
+         * Validates that {@code type} is not null upon construction.
          *
-         * @param index the index of the field.
-         * @param type  the type of the field.
-         * @throws NullPointerException if {@code type} is {@code null}.
+         * @throws NullPointerException if {@code type} is null
          */
         public Field {
             if (type == null) {
-                throw new NullPointerException("the type cannot be null");
+                throw new NullPointerException("Field type cannot be null");
             }
         }
     }

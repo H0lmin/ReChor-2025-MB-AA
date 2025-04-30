@@ -19,7 +19,7 @@ public final class JourneyGeoJsonConverter {
      * @return a compact JSON string (with no extra whitespace) representing the journey route.
      * @throws NullPointerException if journey is null.
      */
-    public static String toGeoJson(Journey journey) {
+    public static Json toGeoJson(Journey journey) {
         Objects.requireNonNull(journey);
 
         List<Stop> stops = new ArrayList<>();
@@ -39,8 +39,7 @@ public final class JourneyGeoJsonConverter {
         // Build a list of coordinate pairs, each as a Json.JArray containing the rounded [longitude, latitude].
         Json geoJson = getJson(stops);
 
-        // Return the JSON text; assuming each Json type toString() produces a compact representation.
-        return geoJson.toString();
+        return geoJson;
     }
 
     private static Json getJson(List<Stop> stops) {
