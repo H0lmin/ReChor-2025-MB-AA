@@ -4,13 +4,17 @@ import ch.epfl.rechor.FormatterFr;
 import ch.epfl.rechor.journey.Journey;
 import ch.epfl.rechor.journey.JourneyGeoJsonConverter;
 import ch.epfl.rechor.journey.JourneyIcalConverter;
+import ch.epfl.rechor.journey.Vehicle;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.HPos;
-import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Accordion;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TitledPane;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -18,7 +22,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.stage.FileChooser;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -27,205 +31,140 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Duration;
-import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public record DetailUI(Node rootNode) {
+    private static final double CIRCLE_RADIUS = 3;
+    private static final int ICON_SIZE        = 31;
 
     public static DetailUI create(ObservableValue<Journey> journeyObs) {
         StackPane root = new StackPane();
-        root.getStyleClass().add("detail-root");
+        root.setId("detail");
         root.getStylesheets().add("detail.css");
-
+//        root.setStyle("-fx-background-color: magenta;");
         Label noJourney = new Label("Aucun voyage");
-        StackPane.setAlignment(noJourney, Pos.CENTER);
+        noJourney.setId("no-journey");
 
-        BorderPane detailPane = new BorderPane();
+        VBox content = new VBox();
 
-        root.getChildren().addAll(noJourney, detailPane);
-
-        journeyObs.addListener((o, oldVal, newVal)
-                -> updateView(newVal, noJourney, detailPane));
-        updateView(journeyObs.getValue(), noJourney, detailPane);
-
+        root.getChildren().setAll(content, noJourney);
+        journeyObs.addListener((o, oldV, newV) -> updateView(newV, noJourney, content));
+        updateView(journeyObs.getValue(), noJourney, content);
         return new DetailUI(root);
     }
 
-    private static void updateView(Journey journey,
-                                   Label noJourney,
-                                   BorderPane detailPane) {
-        if (journey == null) {
-            noJourney.setVisible(true);
-            detailPane.setVisible(false);
-            detailPane.setCenter(null);
-        } else {
-            noJourney.setVisible(false);
-            detailPane.setVisible(true);
+    private static void updateView(Journey journey, Label noJourney, VBox content) {
+        noJourney.setVisible(journey == null);
+        content.setVisible(journey != null);
+
+        if (journey != null) {
             Node grid = buildStepsGrid(journey);
             Node buttons = buildButtonsBar(journey);
-            VBox content = new VBox(grid, buttons);
-            content.setSpacing(0);
-            detailPane.setCenter(content);
+            content.getChildren().setAll(grid, buttons);
+        } else {
+            content.getChildren().clear();
         }
     }
 
     private static Node buildStepsGrid(Journey journey) {
-        GridPane grid = new GridPane();
-        grid.setVgap(0);
-        grid.setPadding(new Insets(0, 0, 0, 10));
-        grid.setId("steps-grid");
-
-        ColumnConstraints col0 = new ColumnConstraints(); // Heure
-        ColumnConstraints col1 = new ColumnConstraints(); // Cercle
-        ColumnConstraints col2 = new ColumnConstraints(); // Nom station
-        ColumnConstraints col3 = new ColumnConstraints(); // Direction
-        col2.setHgrow(Priority.ALWAYS);
-        col3.setHgrow(Priority.ALWAYS);
-        grid.getColumnConstraints().addAll(col0, col1, col2, col3);
-
-        Pane lineLayer = new Pane();
-        lineLayer.setMouseTransparent(true); // Important pour laisser passer les clics
-
-        StepsGridPane stepsGrid = new StepsGridPane(lineLayer) {{
-            setVgap(0);
-            setHgap(0);
-            setPadding(new Insets(0, 0, 0, 10));
-            setId("steps-grid");
-            getColumnConstraints().addAll(col0, col1, col2, col3);
-        }};
+        Pane annotations = new Pane();
+        StepsGridPane grid = new StepsGridPane(annotations);
+        grid.setId("legs");
 
         int row = 0;
         for (Journey.Leg leg : journey.legs()) {
             switch (leg) {
                 case Journey.Leg.Foot foot -> {
                     Label text = new Label(FormatterFr.formatLeg(foot));
-                    stepsGrid.add(text, 2, row, 2, 1);
+                    grid.add(text, 2, row, 2, 1);
                     row++;
                 }
-                case Journey.Leg.Transport tr -> {
-                    row = addTransportLeg(stepsGrid, tr, row);
-                }
+                case Journey.Leg.Transport tr -> row = addTransportLeg(grid, tr, row);
             }
         }
-
-        StackPane layered = new StackPane(stepsGrid, lineLayer);
-        layered.setId("steps-layered");
-        return layered;
+        return new StackPane(annotations, grid);
     }
 
-
-    private static int addTransportLeg(StepsGridPane grid,
-                                       Journey.Leg.Transport tr,
-                                       int row) {
-        // Departure row
+    private static int addTransportLeg(StepsGridPane grid, Journey.Leg.Transport tr, int row) {
+        // Departure details
         Label depTime = new Label(FormatterFr.formatTime(tr.depTime()));
         depTime.getStyleClass().add("departure");
         GridPane.setHalignment(depTime, HPos.RIGHT);
-        Circle depCircle = new Circle(3, Color.BLACK);
+        Circle depCircle = circle();
         Label depStation = new Label(tr.depStop().name());
-        depStation.setPadding(Insets.EMPTY);
         Label depPlatform = new Label(FormatterFr.formatPlatformName(tr.depStop()));
         depPlatform.getStyleClass().add("departure");
         GridPane.setHalignment(depPlatform, HPos.LEFT);
 
-        grid.add(depTime, 0, row);
-        grid.add(depCircle, 1, row);
-        grid.add(depStation, 2, row);
-        grid.add(depPlatform, 3, row);
-        row++;
+        grid.addRow(row++, depTime, depCircle, depStation, depPlatform);
 
-        // Icon & route row
-        ImageView icon = new ImageView(VehicleIcons.iconFor(tr.vehicle()));
-        icon.setFitWidth(20); // taille plus compacte
-        icon.setFitHeight(20);
-        icon.setPreserveRatio(true);
-        icon.setSmooth(true);
-        icon.setCache(true);
-
-        GridPane.setHalignment(icon, HPos.CENTER);
-        GridPane.setValignment(icon, VPos.CENTER);
+        // Icon & route info
+        ImageView icon = iconModeling(tr.vehicle());
+        boolean hasIntermediate = !tr.intermediateStops().isEmpty();
+        grid.add(icon, 0, row, 1, hasIntermediate ? 2 : 1);
 
         Label routeDest = new Label(FormatterFr.formatRouteDestination(tr));
-        routeDest.setWrapText(false);
-        routeDest.setMaxWidth(Double.MAX_VALUE);
-        GridPane.setHgrow(routeDest, Priority.ALWAYS);
+        grid.add(routeDest, 2, row++, 2, 1);
 
-        boolean hasInt = !tr.intermediateStops().isEmpty();
-        grid.add(icon, 0, row, 1, hasInt ? 2 : 1);
-        grid.add(routeDest, 2, row, 2, 1);
-        row++;
-
-
-        if (!tr.intermediateStops().isEmpty()) {
+        // Intermediate stops accordion
+        if (hasIntermediate) {
             int count = tr.intermediateStops().size();
             long dur = Duration.between(tr.depTime(), tr.arrTime()).toMinutes();
-            TitledPane tp = new TitledPane(count + " arrêts, " + dur + " min", buildIntermediateGrid(tr));
+            TitledPane tp = new TitledPane(count + " arrêts, " + dur + " min",
+                    buildIntermediateGrid(tr));
             Accordion acc = new Accordion(tp);
-            grid.add(acc, 2, row, 2, 1);
-            row++;
+            grid.add(acc, 2, row++, 2, 1);
         }
 
-        // Arrival row
+        // Arrival details
         Label arrTime = new Label(FormatterFr.formatTime(tr.arrTime()));
         GridPane.setHalignment(arrTime, HPos.RIGHT);
-        Circle arrCircle = new Circle(3, Color.BLACK);
+        Circle arrCircle = circle();
         Label arrStation = new Label(tr.arrStop().name());
-        arrStation.setPadding(Insets.EMPTY);
         Label arrPlatform = new Label(FormatterFr.formatPlatformName(tr.arrStop()));
         GridPane.setHalignment(arrPlatform, HPos.LEFT);
 
-        grid.add(arrTime, 0, row);
-        grid.add(arrCircle, 1, row);
-        grid.add(arrStation, 2, row);
-        grid.add(arrPlatform, 3, row);
+        grid.addRow(row++, arrTime, arrCircle, arrStation, arrPlatform);
         grid.connect(depCircle, arrCircle);
 
-        GridPane.setMargin(depStation, new Insets(0));
-        GridPane.setMargin(routeDest, new Insets(0));
-
-        return row + 1;
+        return row;
     }
 
     private static GridPane buildIntermediateGrid(Journey.Leg.Transport tr) {
-        GridPane g = new GridPane();
-        g.getStyleClass().add("intermediate-stops");
+        GridPane grid = new GridPane();
+        grid.getStyleClass().add("intermediate-stops");
 
-        int r = 0;
+        int row = 0;
         for (Journey.Leg.IntermediateStop s : tr.intermediateStops()) {
-            Label at = new Label(FormatterFr.formatTime(s.arrTime()));
-            Label dt = new Label(FormatterFr.formatTime(s.depTime()));
-            Label nm = new Label(s.stop().name());
-            nm.setPadding(Insets.EMPTY);
-            g.add(at, 0, r);
-            g.add(dt, 1, r);
-            g.add(nm, 2, r);
-            r++;
+            grid.addRow(row++,
+                    new Label(FormatterFr.formatTime(s.arrTime())),
+                    new Label(FormatterFr.formatTime(s.depTime())),
+                    new Label(s.stop().name()));
         }
-        return g;
+        return grid;
     }
 
     private static Node buildButtonsBar(Journey journey) {
-        HBox bar = new HBox(10);
-        bar.setId("buttons-bar");
-        bar.setAlignment(Pos.CENTER);
+        HBox bar = new HBox();
+        bar.setId("buttons");
+        bar.setAlignment(Pos.BASELINE_CENTER);
+
         Button map = new Button("Carte");
         map.setOnAction(e -> openGeoJsonMap(journey));
         Button cal = new Button("Calendrier");
         cal.setOnAction(e -> exportToIcs(journey));
+
         bar.getChildren().addAll(map, cal);
         return bar;
     }
 
-
-
     private static void openGeoJsonMap(Journey journey) {
         try {
-            String geo = JourneyGeoJsonConverter
-                    .toGeoJson(journey)
-                    .toString()
+            String geo = JourneyGeoJsonConverter.toGeoJson(journey).toString()
                     .replaceAll("\\s+", "");
 
             String encoded = URLEncoder.encode(geo, StandardCharsets.UTF_8);
-
             URI uri = new URI("https", "umap.osm.ch",
                     "/fr/map/", "data=" + encoded, null);
 
@@ -235,28 +174,41 @@ public record DetailUI(Node rootNode) {
         }
     }
 
-    private static void exportToIcs(Journey j) {
-        LocalDate d = j.depTime().toLocalDate();
-        String fn = "voyage_" + d + ".ics";
+    private static void exportToIcs(Journey journey) {
+        String fileName = "voyage_" + journey.depTime().toLocalDate() + ".ics";
         FileChooser chooser = new FileChooser();
+        chooser.setInitialFileName(fileName);
         chooser.setTitle("Exporter le voyage au format iCalendar");
-        chooser.setInitialFileName(fn);
-        File f = chooser.showSaveDialog(null);
-        if (f != null) {
+        File file = chooser.showSaveDialog(null);
+        if (file != null) {
             try {
-                Files.writeString(f.toPath(), JourneyIcalConverter.toIcalendar(j));
+                Files.writeString(file.toPath(), JourneyIcalConverter.toIcalendar(journey));
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
         }
     }
 
-    private static class StepsGridPane extends GridPane {
-        private final java.util.List<Circle[]> connections = new java.util.ArrayList<>();
-        private final Pane linePane;
+    private static ImageView iconModeling(Vehicle v) {
+        var iv = new ImageView(VehicleIcons.iconFor(v));
+        iv.setFitWidth(ICON_SIZE);
+        iv.setFitHeight(ICON_SIZE);
+        iv.setPreserveRatio(true);
+        GridPane.setHalignment(iv, HPos.CENTER);
+        GridPane.setValignment(iv, VPos.CENTER);
+        return iv;
+    }
 
-        public StepsGridPane(Pane linePane) {
-            this.linePane = linePane;
+    private static Circle circle() {
+        return new Circle(CIRCLE_RADIUS, Color.BLACK);
+    }
+
+    private static class StepsGridPane extends GridPane {
+        private final Pane annotationPane;
+        private final List<Circle[]> connections = new ArrayList<>();
+
+        public StepsGridPane(Pane annotationPane) {
+            this.annotationPane = annotationPane;
         }
 
         public void connect(Circle a, Circle b) {
@@ -266,19 +218,23 @@ public record DetailUI(Node rootNode) {
         @Override
         protected void layoutChildren() {
             super.layoutChildren();
-            linePane.getChildren().clear();
+            annotationPane.getChildren().removeIf(Line.class::isInstance);
+
             for (Circle[] pair : connections) {
-                Circle c1 = pair[0], c2 = pair[1];
-                var b1 = c1.localToScene(c1.getBoundsInLocal());
-                var b2 = c2.localToScene(c2.getBoundsInLocal());
-                var p1 = linePane.sceneToLocal(b1.getCenterX(), b1.getCenterY() + 4);
-                var p2 = linePane.sceneToLocal(b2.getCenterX(), b2.getCenterY() - 4);
-                Line ln = new Line(p1.getX(), p1.getY(), p2.getX(), p2.getY());
-                ln.setStrokeWidth(2);
-                ln.setStroke(Color.RED);
-                linePane.getChildren().add(ln);
+                Point2D start = pair[0].localToParent(
+                        pair[0].getCenterX(), pair[0].getCenterY()
+                );
+                Point2D end = pair[1].localToParent(
+                        pair[1].getCenterX(), pair[1].getCenterY()
+                );
+                Line line = new Line(
+                        start.getX(), start.getY() + 4,
+                        end.getX(), end.getY() - 4
+                );
+                line.setStroke(Color.RED);
+                line.setStrokeWidth(2);
+                annotationPane.getChildren().add(line);
             }
         }
     }
-
 }

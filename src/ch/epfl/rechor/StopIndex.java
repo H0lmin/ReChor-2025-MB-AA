@@ -53,7 +53,6 @@ public final class StopIndex {
         for (var entry : altNames.entrySet()) {
             String alt = Objects.requireNonNull(entry.getKey());
             String main = Objects.requireNonNull(entry.getValue());
-            // If main is not a known main name, you could either add or ignore.
             map.computeIfAbsent(main, k -> new HashSet<>(List.of(main)))
                     .add(alt);
         }
@@ -72,15 +71,11 @@ public final class StopIndex {
             String expansions = ACCENT_EXPANSIONS.get(Character.toLowerCase(c));
             if (expansions != null) {
                 if (Character.isUpperCase(c)) {
-                    // For uppercase, simply quote the character (skipping advanced expansion for
-                    // brevity)
                     sb.append(Pattern.quote(Character.toString(c)));
                 } else {
-                    // Build a character class, e.g., "[eéèêë]"
                     sb.append('[').append(expansions).append(']');
                 }
             } else {
-                // No expansion; quote the character.
                 sb.append(Pattern.quote(Character.toString(c)));
             }
         }
@@ -184,8 +179,12 @@ public final class StopIndex {
             }
         }
 
-        // 4) Sort in descending order of score (optionally tie-break alphabetically).
-        scored.sort((a, b) -> Integer.compare(b.score, a.score));
+        // 4) Sort in descending order of score, tie-breaking alphabetically for equal scores.
+        scored.sort((a, b) -> {
+            int cmp = Integer.compare(b.score, a.score);
+            if (cmp != 0) return cmp;
+            return a.name.compareTo(b.name);
+        });
 
         // 5) Take up to maxCount main names.
         List<String> result = new ArrayList<>();
