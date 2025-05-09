@@ -3,7 +3,10 @@ package ch.epfl.rechor.gui;
 import ch.epfl.rechor.StopIndex;
 import ch.epfl.rechor.journey.Journey;
 import ch.epfl.rechor.journey.JourneyExtractor;
+import ch.epfl.rechor.journey.Router;
 import ch.epfl.rechor.journey.Profile;
+import ch.epfl.rechor.timetable.StationAliases;
+import ch.epfl.rechor.timetable.Stations;
 import ch.epfl.rechor.timetable.TimeTable;
 import ch.epfl.rechor.timetable.mapped.FileTimeTable;
 import javafx.application.Application;
@@ -17,18 +20,17 @@ import javafx.stage.Stage;
 
 import java.nio.file.Path;
 import java.time.LocalDate;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.Map;
 
+/**
+ * Main application class that composes the query, summary, and detail UIs
+ * and wires them together to provide an interactive journey search interface.
+ */
 public class Main extends Application {
 
-    // stored in a field so the binding stays active
     private ObservableValue<List<Journey>> journeysO;
-    // caches for profile to avoid rebuilding when not needed
-    private final Profile[] profileCache = new Profile[1];
-    private final String[] lastArrStop = new String[1];
-    private final LocalDate[] lastDate = new LocalDate[1];
 
     public static void main(String[] args) {
         launch(args);
@@ -36,38 +38,50 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // 1. Load timetable
+        // Load timetable from the "timetable" subfolder in the working directory
         TimeTable timeTable = FileTimeTable.in(Path.of("timetable"));
 
-        // Build list of stop names
-        List<String> mainStops = IntStream.range(0, timeTable.stations().size())
-                .mapToObj(timeTable.stations()::name)
-                .toList();
-        StopIndex stopIndex = new StopIndex(mainStops, Collections.emptyMap());
+        // Build stop index from station names and aliases
+        Stations stations = timeTable.stations();
+        StationAliases aliases = timeTable.stationAliases();
+        // Map main station names
+        List<String> mainStops = new java.util.ArrayList<>();
+        for (int i = 0; i < stations.size(); i++) {
+            mainStops.add(stations.name(i));
+        }
+        // Map aliases to main names
+        Map<String, String> altNames = new HashMap<>();
+        for (int i = 0; i < aliases.size(); i++) {
+            altNames.put(aliases.alias(i), aliases.stationName(i));
+        }
+        StopIndex index = new StopIndex(mainStops, altNames);
 
-        // 2. Create QueryUI
-        QueryUI queryUI = QueryUI.create(stopIndex);
+        // Create the query UI
+        QueryUI queryUI = QueryUI.create(index);
 
-        // 3. Define observable journeys with guard for invalid stops
+        // Precompute a name-to-ID map for station lookup
+        Map<String, Integer> nameToId = new HashMap<>();
+        for (int i = 0; i < stations.size(); i++) {
+            nameToId.put(stations.name(i), i);
+        }
+
+        // Create observable list of journeys based on query parameters
         journeysO = Bindings.createObjectBinding(() -> {
             String dep = queryUI.depStopO().getValue();
             String arr = queryUI.arrStopO().getValue();
-            // if either stop not valid, show empty list
-            if (!mainStops.contains(dep) || !mainStops.contains(arr)) {
+            LocalDate date = queryUI.dateO().getValue();
+            if (dep == null || arr == null || dep.isEmpty() || arr.isEmpty()) {
                 return List.of();
             }
-            LocalDate date = queryUI.dateO().getValue();
-            // rebuild profile only if arrival or date changed
-            if (profileCache[0] == null
-                    || !arr.equals(lastArrStop[0])
-                    || !date.equals(lastDate[0])) {
-                int arrId = mainStops.indexOf(arr);
-                profileCache[0] = new Profile.Builder(timeTable, date, arrId).build();
-                lastArrStop[0] = arr;
-                lastDate[0] = date;
+            Integer depId = nameToId.get(dep);
+            Integer arrId = nameToId.get(arr);
+            if (depId == null || arrId == null) {
+                return List.of();
             }
-            int depId = mainStops.indexOf(dep);
-            return JourneyExtractor.journeys(profileCache[0], depId);
+            // Build profile and extract journeys
+            Router router = new Router(timeTable);
+            Profile profile = router.profile(date, arrId);
+            return JourneyExtractor.journeys(profile, depId);
         }, queryUI.depStopO(), queryUI.arrStopO(), queryUI.dateO());
 
         // 4. Create summary & detail UIs
@@ -76,7 +90,7 @@ public class Main extends Application {
 
         // 5. Assemble scene graph with SplitPane at center
         BorderPane root = new BorderPane();
-        root.setTop(queryUI.rootNode());
+        root.setTop(queryUI.root());
         SplitPane centerSplit = new SplitPane(summaryUI.rootNode(), detailUI.rootNode());
         root.setCenter(centerSplit);
 

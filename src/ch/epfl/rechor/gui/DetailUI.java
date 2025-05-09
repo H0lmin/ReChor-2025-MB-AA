@@ -14,6 +14,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -22,7 +23,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.stage.FileChooser;
 
-import java.awt.*;
+import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -34,22 +35,32 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Displays journey details.
+ */
 public record DetailUI(Node rootNode) {
     private static final double CIRCLE_RADIUS = 3;
-    private static final int ICON_SIZE        = 31;
+    private static final int ICON_SIZE = 31;
 
     public static DetailUI create(ObservableValue<Journey> journeyObs) {
         StackPane root = new StackPane();
         root.setId("detail");
         root.getStylesheets().add("detail.css");
-//        root.setStyle("-fx-background-color: magenta;");
+
         Label noJourney = new Label("Aucun voyage");
         noJourney.setId("no-journey");
 
         VBox content = new VBox();
 
-        root.getChildren().setAll(content, noJourney);
-        journeyObs.addListener((o, oldV, newV) -> updateView(newV, noJourney, content));
+        // Wrap content for scrolling
+        ScrollPane scroll = new ScrollPane(content);
+        scroll.setPannable(true);
+
+        root.getChildren().setAll(scroll, noJourney);
+
+        journeyObs.addListener((o, oldV, newV)
+                -> updateView(newV, noJourney, content));
+
         updateView(journeyObs.getValue(), noJourney, content);
         return new DetailUI(root);
     }
@@ -57,7 +68,6 @@ public record DetailUI(Node rootNode) {
     private static void updateView(Journey journey, Label noJourney, VBox content) {
         noJourney.setVisible(journey == null);
         content.setVisible(journey != null);
-
         if (journey != null) {
             Node grid = buildStepsGrid(journey);
             Node buttons = buildButtonsBar(journey);
@@ -95,7 +105,7 @@ public record DetailUI(Node rootNode) {
         Label depStation = new Label(tr.depStop().name());
         Label depPlatform = new Label(FormatterFr.formatPlatformName(tr.depStop()));
         depPlatform.getStyleClass().add("departure");
-        GridPane.setHalignment(depPlatform, HPos.LEFT);
+        GridPane.setHalignment(depPlatform, HPos.CENTER);
 
         grid.addRow(row++, depTime, depCircle, depStation, depPlatform);
 
@@ -123,7 +133,7 @@ public record DetailUI(Node rootNode) {
         Circle arrCircle = circle();
         Label arrStation = new Label(tr.arrStop().name());
         Label arrPlatform = new Label(FormatterFr.formatPlatformName(tr.arrStop()));
-        GridPane.setHalignment(arrPlatform, HPos.LEFT);
+        GridPane.setHalignment(arrPlatform, HPos.CENTER);
 
         grid.addRow(row++, arrTime, arrCircle, arrStation, arrPlatform);
         grid.connect(depCircle, arrCircle);
@@ -134,13 +144,13 @@ public record DetailUI(Node rootNode) {
     private static GridPane buildIntermediateGrid(Journey.Leg.Transport tr) {
         GridPane grid = new GridPane();
         grid.getStyleClass().add("intermediate-stops");
-
         int row = 0;
-        for (Journey.Leg.IntermediateStop s : tr.intermediateStops()) {
+        for (var s : tr.intermediateStops()) {
             grid.addRow(row++,
                     new Label(FormatterFr.formatTime(s.arrTime())),
                     new Label(FormatterFr.formatTime(s.depTime())),
-                    new Label(s.stop().name()));
+                    new Label(s.stop().name())
+            );
         }
         return grid;
     }
@@ -149,12 +159,10 @@ public record DetailUI(Node rootNode) {
         HBox bar = new HBox();
         bar.setId("buttons");
         bar.setAlignment(Pos.BASELINE_CENTER);
-
         Button map = new Button("Carte");
         map.setOnAction(e -> openGeoJsonMap(journey));
         Button cal = new Button("Calendrier");
         cal.setOnAction(e -> exportToIcs(journey));
-
         bar.getChildren().addAll(map, cal);
         return bar;
     }
@@ -163,11 +171,9 @@ public record DetailUI(Node rootNode) {
         try {
             String geo = JourneyGeoJsonConverter.toGeoJson(journey).toString()
                     .replaceAll("\\s+", "");
-
-            String encoded = URLEncoder.encode(geo, StandardCharsets.UTF_8);
-            URI uri = new URI("https", "umap.osm.ch",
-                    "/fr/map/", "data=" + encoded, null);
-
+            String enc = URLEncoder.encode(geo, StandardCharsets.UTF_8);
+            URI uri = new URI("https", "umap.osm.ch", "/fr/map/",
+                    "data=" + enc, null);
             Desktop.getDesktop().browse(uri);
         } catch (IOException | URISyntaxException e) {
             e.printStackTrace();
@@ -190,7 +196,7 @@ public record DetailUI(Node rootNode) {
     }
 
     private static ImageView iconModeling(Vehicle v) {
-        var iv = new ImageView(VehicleIcons.iconFor(v));
+        ImageView iv = new ImageView(VehicleIcons.iconFor(v));
         iv.setFitWidth(ICON_SIZE);
         iv.setFitHeight(ICON_SIZE);
         iv.setPreserveRatio(true);
@@ -219,18 +225,10 @@ public record DetailUI(Node rootNode) {
         protected void layoutChildren() {
             super.layoutChildren();
             annotationPane.getChildren().removeIf(Line.class::isInstance);
-
             for (Circle[] pair : connections) {
-                Point2D start = pair[0].localToParent(
-                        pair[0].getCenterX(), pair[0].getCenterY()
-                );
-                Point2D end = pair[1].localToParent(
-                        pair[1].getCenterX(), pair[1].getCenterY()
-                );
-                Line line = new Line(
-                        start.getX(), start.getY() + 4,
-                        end.getX(), end.getY() - 4
-                );
+                Point2D srt = pair[0].localToParent(pair[0].getCenterX(), pair[0].getCenterY());
+                Point2D end = pair[1].localToParent(pair[1].getCenterX(), pair[1].getCenterY());
+                Line line = new Line(srt.getX(), srt.getY()+4, end.getX(), end.getY()-4);
                 line.setStroke(Color.RED);
                 line.setStrokeWidth(2);
                 annotationPane.getChildren().add(line);

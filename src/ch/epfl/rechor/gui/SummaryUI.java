@@ -2,6 +2,7 @@ package ch.epfl.rechor.gui;
 
 import ch.epfl.rechor.FormatterFr;
 import ch.epfl.rechor.journey.Journey;
+import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -31,7 +32,8 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
     private static final double LINE_PADDING = 5.0;
 
     /**
-     * Crée la ListView paramétrée avec son cell factory et sélection automatique.
+     * Crée la ListView paramétrée avec son cell factory et sélection automatique,
+     * et centre la vue sur le voyage sélectionné.
      */
     public static SummaryUI create(ObservableValue<List<Journey>> journeysO,
                                    ObservableValue<LocalTime> depTimeO) {
@@ -42,28 +44,37 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
         listView.setItems(items);
         listView.setCellFactory(lv -> new SummaryCell());
 
+        // Sélection automatique du voyage le plus proche
         Runnable selectNearest = () -> {
             LocalTime target = depTimeO.getValue();
             Journey sel = items.stream()
                     .filter(j -> !j.depTime().toLocalTime().isBefore(target))
                     .findFirst()
                     .orElseGet(() -> items.isEmpty() ? null : items.getLast());
-            if (sel != null) listView.getSelectionModel().select(sel);
-            else listView.getSelectionModel().clearSelection();
+            if (sel != null) {
+                listView.getSelectionModel().select(sel);
+                // Centrer la vue sur la sélection
+                Platform.runLater(() -> {
+                    int idx = listView.getSelectionModel().getSelectedIndex();
+                    if (idx >= 0) {
+                        listView.scrollTo(idx);
+                    }
+                });
+            } else {
+                listView.getSelectionModel().clearSelection();
+            }
         };
 
-
+        // Met à jour la liste et recalcule la sélection
         journeysO.subscribe(newJourneys -> {
             items.setAll(newJourneys);
             selectNearest.run();
         });
-
         depTimeO.subscribe(newTime -> selectNearest.run());
 
         return new SummaryUI(listView,
                 listView.getSelectionModel().selectedItemProperty());
     }
-
 
     /**
      * Cellule affichant route, temps, graphique, et durée en trois lignes.
@@ -142,9 +153,6 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
         public void updateSelected(boolean selected) {
             super.updateSelected(selected);
             if (selected) {
-                cellBox.setBackground(new Background(
-                        new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, null)
-                ));
                 routeLabel.setTextFill(Color.BLACK);
                 depLabel.setTextFill(Color.BLACK);
                 arrLabel.setTextFill(Color.BLACK);

@@ -1,11 +1,10 @@
 package ch.epfl.rechor.gui;
 
 import ch.epfl.rechor.StopIndex;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.HBox;
@@ -17,100 +16,76 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Represents the query interface allowing users to select departure/arrival stops,
- * date, and time for a journey search.
- *
- * @param rootNode the JavaFX node at the root of the query interface scene graph
- * @param depStopO observable value containing the selected departure stop name
- * @param arrStopO observable value containing the selected arrival stop name
- * @param dateO    observable value containing the chosen travel date
- * @param timeO    observable value containing the chosen travel time
+ * UI for querying journeys: departure/arrival stops, date, and time.
  */
 public record QueryUI(
-        Node rootNode,
-        ObservableValue<String> depStopO,
-        ObservableValue<String> arrStopO,
-        ObservableValue<LocalDate> dateO,
-        ObservableValue<LocalTime> timeO
+        Node root,
+        javafx.beans.value.ObservableValue<String> depStopO,
+        javafx.beans.value.ObservableValue<String> arrStopO,
+        javafx.beans.value.ObservableValue<LocalDate> dateO,
+        javafx.beans.value.ObservableValue<LocalTime> timeO
 ) {
-
     /**
-     * Builds and returns a QueryUI instance, constructing the scene graph
-     * and wiring up all components according to the specification.
-     *
-     * @param index the StopIndex used to search stop names
-     * @return a configured QueryUI
+     * Creates the QueryUI record initialized with stop index bindings.
      */
     public static QueryUI create(StopIndex index) {
-        // Departure stop input
         StopField depField = StopField.create(index);
+        StopField arrField = StopField.create(index);
+
         TextField depText = depField.textField();
         depText.setPromptText("Nom de l'arrêt de départ");
         depText.setId("depStop");
-        Label depLabel = new Label("Départ\u202f:");
 
-        // Arrival stop input
-        StopField arrField = StopField.create(index);
         TextField arrText = arrField.textField();
         arrText.setPromptText("Nom de l'arrêt d'arrivée");
         arrText.setId("arrStop");
-        Label arrLabel = new Label("Arrivée\u202f:");
 
-        // Swap button between departure and arrival
-        Button swapButton = new Button("\u21C4");
+        Button swapButton = new Button("\uD83E\uDC58");
         swapButton.setOnAction(e -> {
-            String depValue = depText.getText();
-            String arrValue = arrText.getText();
-            depField.setTo(arrValue);
-            arrField.setTo(depValue);
+            String tmp = depText.getText();
+            depField.setTo(arrText.getText());
+            arrField.setTo(tmp);
         });
 
-        // Top row HBox: departure, swap, arrival
-        HBox topRow = new HBox();
-        topRow.getChildren().addAll(
-                depLabel, depText,
+        HBox topRow = new HBox(
+                new Label("Départ\u202f:"),
+                depText,
                 swapButton,
-                arrLabel, arrText
+                new Label("Arrivée\u202f:"),
+                arrText
         );
 
-        // Date picker for travel date
         DatePicker datePicker = new DatePicker(LocalDate.now());
         datePicker.setId("date");
-        Label dateLabel = new Label("Date\u202f:");
 
-        // Time input with formatter allowing H:mm and displaying HH:mm
-        DateTimeFormatter toStringFmt = DateTimeFormatter.ofPattern("HH:mm");
-        DateTimeFormatter fromStringFmt = DateTimeFormatter.ofPattern("H:mm");
-        LocalTimeStringConverter converter =
-                new LocalTimeStringConverter(toStringFmt, fromStringFmt);
-        TextFormatter<LocalTime> timeFormatter = new TextFormatter<>(converter);
-        timeFormatter.setValue(LocalTime.now());
+        DateTimeFormatter fmtOut = DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter fmtIn  = DateTimeFormatter.ofPattern("H:mm");
+        TextFormatter<LocalTime> timeFmt = new TextFormatter<>(
+                new LocalTimeStringConverter(fmtOut, fmtIn),
+                LocalTime.now()
+        );
         TextField timeField = new TextField();
         timeField.setId("time");
-        timeField.setTextFormatter(timeFormatter);
-        Label timeLabel = new Label("Heure\u202f:");
+        timeField.setTextFormatter(timeFmt);
 
-        // Bottom row HBox: date, time
-        HBox bottomRow = new HBox();
-        bottomRow.getChildren().addAll(
-                dateLabel, datePicker,
-                timeLabel, timeField
+        HBox bottomRow = new HBox(
+                new Label("Date\u202f:"),
+                datePicker,
+                new Label("Heure\u202f:"),
+                timeField
         );
 
-        // Root VBox containing two rows
         VBox root = new VBox();
         root.getChildren().addAll(topRow, bottomRow);
-        // Attach CSS using classpath resource
         root.setId("query");
         root.getStylesheets().add("query.css");
-
 
         return new QueryUI(
                 root,
                 depField.stopO(),
                 arrField.stopO(),
                 datePicker.valueProperty(),
-                timeFormatter.valueProperty()
+                timeFmt.valueProperty()
         );
     }
 }

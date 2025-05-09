@@ -20,7 +20,6 @@ public final class JourneyGeoJsonConverter {
      * @throws NullPointerException if journey is null.
      */
     public static Json toGeoJson(Journey journey) {
-        Objects.requireNonNull(journey);
 
         List<Stop> stops = new ArrayList<>();
         List<Journey.Leg> legs = journey.legs();
@@ -37,9 +36,8 @@ public final class JourneyGeoJsonConverter {
         }
 
         // Build a list of coordinate pairs, each as a Json.JArray containing the rounded [longitude, latitude].
-        Json geoJson = getJson(stops);
 
-        return geoJson;
+        return getJson(stops);
     }
 
     private static Json getJson(List<Stop> stops) {

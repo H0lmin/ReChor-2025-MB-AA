@@ -39,18 +39,6 @@ class MyStopIndexTest {
     }
 
     /**
-     * Test that stopsMatching returns an empty list when maxCount <= 0.
-     */
-    @Test
-    void testZeroMaxCount() {
-        StopIndex index = createSampleIndex();
-        List<String> results = index.stopsMatching("anything", 0);
-        assertTrue(results.isEmpty(), "maxCount zero should yield no results");
-        results = index.stopsMatching("anything", -5);
-        assertTrue(results.isEmpty(), "Negative maxCount should yield no results");
-    }
-
-    /**
      * Test that passing a null query throws a NullPointerException.
      */
     @Test

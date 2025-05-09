@@ -18,10 +18,11 @@ import java.util.List;
 /**
  * UI component combining a TextField and a Popup for searching and selecting stops.
  */
-public record StopField(TextField textField, ObservableValue<String> stopO) {
+public record StopField(TextField textField,
+                        ObservableValue<String> stopO) {
 
     /**
-     * Create a StopField bound to the given index.
+     * Create a StopField bound to the given StopIndex.
      */
     public static StopField create(StopIndex index) {
         TextField textField = new TextField();
@@ -35,7 +36,7 @@ public record StopField(TextField textField, ObservableValue<String> stopO) {
         listView.setMaxHeight(240);
         popup.getContent().add(listView);
 
-        // Text listener to update suggestions
+        // Listener to update suggestions
         ChangeListener<String> textListener = (obs, old, nw) -> {
             List<String> results = index.stopsMatching(nw == null ? "" : nw, 30);
             listView.getItems().setAll(results);
@@ -45,7 +46,7 @@ public record StopField(TextField textField, ObservableValue<String> stopO) {
             }
         };
 
-        // Bounds listener to reposition popup
+        // Reposition popup when field moves/resizes
         ChangeListener<Bounds> boundsListener = (obs, oldB, newB) -> {
             Bounds screen = textField.localToScreen(newB);
             if (screen != null) {
@@ -54,10 +55,10 @@ public record StopField(TextField textField, ObservableValue<String> stopO) {
             }
         };
 
-        // Commit selection helper
+        // Commit selection helper: only commit if a suggestion is selected; otherwise clear
         Runnable commitSelection = () -> {
             String sel = listView.getSelectionModel().getSelectedItem();
-            if (sel != null) {
+            if (sel != null && !sel.isBlank()) {
                 textField.setText(sel);
                 selectedStop.set(sel);
             } else {
@@ -69,18 +70,8 @@ public record StopField(TextField textField, ObservableValue<String> stopO) {
 
         // Mouse click commits
         listView.setOnMouseClicked(e -> commitSelection.run());
-        // Enter key commits
-        textField.setOnAction(e -> commitSelection.run());
 
-        // Intercept TAB to commit before focus moves
-        textField.addEventFilter(KeyEvent.KEY_PRESSED, e -> {
-            if (e.getCode() == KeyCode.TAB && popup.isShowing()) {
-                commitSelection.run();
-                // allow focus traversal after commit
-            }
-        });
-
-        // Arrow keys navigate suggestions without re-query
+        // Arrow keys navigate suggestions without resetting
         textField.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             if (!popup.isShowing()) return;
             MultipleSelectionModel<String> selModel = listView.getSelectionModel();
@@ -110,8 +101,8 @@ public record StopField(TextField textField, ObservableValue<String> stopO) {
         });
 
         // Show/hide popup on focus changes
-        textField.focusedProperty().addListener((obs, wasF, nowF) -> {
-            if (nowF) {
+        textField.focusedProperty().addListener((obs, wasFocused, nowFocused) -> {
+            if (nowFocused) {
                 Bounds b = textField.localToScreen(textField.getBoundsInLocal());
                 if (b != null) popup.show(textField, b.getMinX(), b.getMaxY());
                 textField.textProperty().addListener(textListener);
