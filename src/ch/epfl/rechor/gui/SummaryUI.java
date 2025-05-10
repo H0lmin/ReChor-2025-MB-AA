@@ -13,7 +13,10 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
@@ -25,112 +28,98 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Vue d'ensemble des voyages : icône/ligne, heures, graphique des disques, et durée.
+ * UI component showing an overview of journeys in a list.
+ * Exposes the root JavaFX node and an observable for the selected journey.
  */
 public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO) {
     private static final double DISK_RADIUS = 3.0;
     private static final double LINE_PADDING = 5.0;
+    private static final String STYLE_SHEET = "summary.css";
 
     /**
-     * Crée la ListView paramétrée avec son cell factory et sélection automatique,
-     * et centre la vue sur le voyage sélectionné.
+     * Creates a SummaryUI bound to the given journeys and departure-time observables.
+     *
+     * @param journeysObservable        source of journey lists to display
+     * @param depTimeObservable   source of desired departure times
+     * @return a new SummaryUI record
      */
-    public static SummaryUI create(ObservableValue<List<Journey>> journeysO,
-                                   ObservableValue<LocalTime> depTimeO) {
-        ListView<Journey> listView = new ListView<>();
-        listView.getStylesheets().add("summary.css");
+    public static SummaryUI create(ObservableValue<List<Journey>> journeysObservable,
+                                   ObservableValue<LocalTime> depTimeObservable) {
+        ListView<Journey> journeyListView = new ListView<>();
+        journeyListView.getStylesheets().add(STYLE_SHEET);
 
-        ObservableList<Journey> items = FXCollections.observableArrayList();
-        listView.setItems(items);
-        listView.setCellFactory(lv -> new SummaryCell());
+        ObservableList<Journey> journeyItems = FXCollections.observableArrayList();
+        journeyListView.setItems(journeyItems);
+        journeyListView.setCellFactory(view -> new JourneyCell());
 
-        // Sélection automatique du voyage le plus proche
-        Runnable selectNearest = () -> {
-            LocalTime target = depTimeO.getValue();
-            Journey sel = items.stream()
-                    .filter(j -> !j.depTime().toLocalTime().isBefore(target))
+        Runnable selectNearestJourney = () -> {
+            LocalTime desired = depTimeObservable.getValue();
+            Journey nearest = journeyItems.stream()
+                    .filter(item -> !item.depTime().toLocalTime().isBefore(desired))
                     .findFirst()
-                    .orElseGet(() -> items.isEmpty() ? null : items.getLast());
-            if (sel != null) {
-                listView.getSelectionModel().select(sel);
-                // Centrer la vue sur la sélection
+                    .orElseGet(() -> journeyItems.isEmpty() ? null : journeyItems.getLast());
+
+            if (nearest != null) {
+                journeyListView.getSelectionModel().select(nearest);
                 Platform.runLater(() -> {
-                    int idx = listView.getSelectionModel().getSelectedIndex();
-                    if (idx >= 0) {
-                        listView.scrollTo(idx);
+                    int index = journeyListView.getSelectionModel().getSelectedIndex();
+                    if (index >= 0) {
+                        journeyListView.scrollTo(index);
                     }
                 });
             } else {
-                listView.getSelectionModel().clearSelection();
+                journeyListView.getSelectionModel().clearSelection();
             }
         };
 
-        // Met à jour la liste et recalcule la sélection
-        journeysO.subscribe(newJourneys -> {
-            items.setAll(newJourneys);
-            selectNearest.run();
+        journeysObservable.subscribe(updatedJourneys -> {
+            journeyItems.setAll(updatedJourneys);
+            selectNearestJourney.run();
         });
-        depTimeO.subscribe(newTime -> selectNearest.run());
+        depTimeObservable.subscribe(newTime -> selectNearestJourney.run());
 
-        return new SummaryUI(listView,
-                listView.getSelectionModel().selectedItemProperty());
+        return new SummaryUI(journeyListView,
+                journeyListView.getSelectionModel().selectedItemProperty()
+        );
     }
 
     /**
-     * Cellule affichant route, temps, graphique, et durée en trois lignes.
+     * Renders each Journey as a cell with route, times, duration, and a timeline.
      */
-    private static class SummaryCell extends ListCell<Journey> {
+    private static class JourneyCell extends ListCell<Journey> {
         private final ImageView iconView = new ImageView();
         private final Label routeLabel = new Label();
-        private final Label depLabel = new Label();
-        private final Label arrLabel = new Label();
-        private final Label durLabel = new Label();
+        private final Label depTimeLabel = new Label();
+        private final Label arrTimeLabel = new Label();
+        private final Label durationLabel = new Label();
 
-        private final Pane trackPane;
+        private final Pane timelinePane;
         private final VBox cellBox;
 
-        private List<Circle> disks = List.of();
-        private long totalMins;
+        private List<Circle> timelineMarkers = List.of();
+        private long totalJourneyMinutes;
 
-        SummaryCell() {
-            trackPane = new Pane() {
-                @Override
-                protected void layoutChildren() {
-                    super.layoutChildren();
-                    getChildren().clear();
-                    double w = getWidth(), h = getHeight(), y = h / 2;
-                    getChildren().add(new Line(LINE_PADDING, y, w - LINE_PADDING, y));
-                    for (Circle c : disks) {
-                        double off = (double) c.getUserData();
-                        double x = LINE_PADDING + (off / totalMins) * (w - 2 * LINE_PADDING);
-                        c.setCenterX(x);
-                        c.setCenterY(y);
-                        getChildren().add(c);
-                    }
-                }
-            };
-            trackPane.setPrefSize(0, 0);
-            HBox.setHgrow(trackPane, Priority.ALWAYS);
+        JourneyCell() {
+            timelinePane = createTimelinePane();
+            timelinePane.setPrefSize(0, 0);
+            HBox.setHgrow(timelinePane, Priority.ALWAYS);
 
-            // ligne 1 : icône + route
-            HBox routeRow = new HBox();
+            HBox routeRow = new HBox(iconView, routeLabel);
             routeRow.getStyleClass().add("route");
             routeRow.setAlignment(Pos.CENTER_LEFT);
-            routeRow.getChildren().setAll(iconView, routeLabel);
 
-            // ligne 2 : heures + graphique
-            HBox timesRow = new HBox();
-            timesRow.setAlignment(Pos.CENTER_LEFT);
-            timesRow.getChildren().setAll(depLabel, trackPane, arrLabel);
+            HBox timeRow = new HBox(depTimeLabel, timelinePane, arrTimeLabel);
+            timeRow.setAlignment(Pos.CENTER_LEFT);
 
-            // ligne 3 : durée centrée
-            HBox durRow = new HBox(durLabel);
-            durRow.setAlignment(Pos.CENTER);
+            HBox durationRow = new HBox(durationLabel);
+            durationRow.setAlignment(Pos.CENTER);
+            durationRow.getStyleClass().add("duration-row");
 
-            cellBox = new VBox(routeRow, timesRow, durRow);
+            cellBox = new VBox(routeRow, timeRow, durationRow);
             cellBox.getStyleClass().add("journey");
-            depLabel.getStyleClass().add("departure");
-            durLabel.getStyleClass().add("duration");
+
+            depTimeLabel.getStyleClass().add("departure");
+            durationLabel.getStyleClass().add("duration");
 
             setGraphic(cellBox);
         }
@@ -139,12 +128,11 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
         protected void updateItem(Journey journey, boolean empty) {
             super.updateItem(journey, empty);
             if (empty || journey == null) {
-                setText(null);
                 setGraphic(null);
                 return;
             }
             updateTransport(journey);
-            updateTimes(journey);
+            updateTimeDisplay(journey);
             updateDisks(journey);
             setGraphic(cellBox);
         }
@@ -154,64 +142,90 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
             super.updateSelected(selected);
             if (selected) {
                 routeLabel.setTextFill(Color.BLACK);
-                depLabel.setTextFill(Color.BLACK);
-                arrLabel.setTextFill(Color.BLACK);
-                durLabel.setTextFill(Color.BLACK);
+                depTimeLabel.setTextFill(Color.BLACK);
+                arrTimeLabel.setTextFill(Color.BLACK);
+                durationLabel.setTextFill(Color.BLACK);
             }
         }
 
-        private void updateTransport(Journey j) {
-            Optional<Journey.Leg.Transport> opt = j.legs().stream()
-                    .filter(l -> l instanceof Journey.Leg.Transport)
-                    .map(l -> (Journey.Leg.Transport) l)
+        private Pane createTimelinePane() {
+            return new Pane() {
+                @Override
+                protected void layoutChildren() {
+                    super.layoutChildren();
+                    getChildren().clear();
+                    double width = getWidth();
+                    double midY = getHeight() / 2;
+                    getChildren().add(new Line(LINE_PADDING, midY,
+                            width - LINE_PADDING, midY));
+                    for (Circle marker : timelineMarkers) {
+                        double offset = (double) marker.getUserData();
+                        double xPos = LINE_PADDING +
+                                (offset / totalJourneyMinutes) * (width - 2 * LINE_PADDING);
+                        marker.setCenterX(xPos);
+                        marker.setCenterY(midY);
+                        getChildren().add(marker);
+                    }
+                }
+            };
+        }
+
+        private void updateTransport(Journey journey) {
+            Optional<Journey.Leg.Transport> transportLeg = journey.legs().stream()
+                    .filter(leg -> leg instanceof Journey.Leg.Transport)
+                    .map(leg -> (Journey.Leg.Transport) leg)
                     .findFirst();
-            if (opt.isPresent()) {
-                Journey.Leg.Transport t = opt.get();
-                Image icon = VehicleIcons.iconFor(t.vehicle());
+
+            if (transportLeg.isPresent()) {
+                Journey.Leg.Transport leg = transportLeg.get();
+                Image icon = VehicleIcons.iconFor(leg.vehicle());
                 iconView.setImage(icon);
                 iconView.setFitWidth(20);
                 iconView.setPreserveRatio(true);
-                routeLabel.setText(FormatterFr.formatRouteDestination(t));
+                routeLabel.setText(
+                        FormatterFr.formatRouteDestination(leg)
+                );
             } else {
                 iconView.setImage(null);
                 routeLabel.setText("");
             }
         }
 
-        private void updateTimes(Journey j) {
-            depLabel.setText(FormatterFr.formatTime(j.depTime()));
-            arrLabel.setText(FormatterFr.formatTime(j.arrTime()));
-            durLabel.setText(FormatterFr.formatDuration(j.duration()));
+        private void updateTimeDisplay(Journey journey) {
+            depTimeLabel.setText(FormatterFr.formatTime(journey.depTime()));
+            arrTimeLabel.setText(FormatterFr.formatTime(journey.arrTime()));
+            durationLabel.setText(FormatterFr.formatDuration(journey.duration()));
         }
 
-        private void updateDisks(Journey j) {
-            List<Circle> cs = new ArrayList<>();
-            totalMins = Duration.between(j.depTime(), j.arrTime()).toMinutes();
+        private void updateDisks(Journey journey) {
+            List<Circle> newMarkers = new ArrayList<>();
+            totalJourneyMinutes = journey.duration().toMinutes();
 
-            cs.add(createDisk("dep-arr", 0));
-            List<Journey.Leg> legs = j.legs();
+            newMarkers.add(createDisk("dep-arr", 0));
+            List<Journey.Leg> legs = journey.legs();
             for (int i = 1; i < legs.size() - 1; i++) {
-                var prev = legs.get(i - 1);
-                var curr = legs.get(i);
-                var next = legs.get(i + 1);
-                if (curr instanceof Journey.Leg.Foot
-                        && prev instanceof Journey.Leg.Transport
-                        && next instanceof Journey.Leg.Transport) {
-                    double off = Duration.between(j.depTime(), curr.depTime()).toMinutes();
-                    cs.add(createDisk("transfer", off));
+                Journey.Leg previousLeg = legs.get(i - 1);
+                Journey.Leg currentLeg = legs.get(i);
+                Journey.Leg nextLeg = legs.get(i + 1);
+                if (currentLeg instanceof Journey.Leg.Foot
+                        && previousLeg instanceof Journey.Leg.Transport
+                        && nextLeg instanceof Journey.Leg.Transport) {
+                    long offset = Duration.between(
+                            journey.depTime(), currentLeg.depTime()
+                    ).toMinutes();
+                    newMarkers.add(createDisk("transfer", offset));
                 }
             }
-            // arrivée
-            cs.add(createDisk("dep-arr", totalMins));
-            disks = cs;
-            trackPane.requestLayout();
+            newMarkers.add(createDisk("dep-arr", totalJourneyMinutes));
+            timelineMarkers = newMarkers;
+            timelinePane.requestLayout();
         }
 
-        private Circle createDisk(String styleClass, double offset) {
-            Circle c = new Circle(DISK_RADIUS);
-            c.getStyleClass().add(styleClass);
-            c.setUserData(offset);
-            return c;
+        private Circle createDisk(String styleClass, double offsetMinutes) {
+            Circle marker = new Circle(DISK_RADIUS);
+            marker.getStyleClass().add(styleClass);
+            marker.setUserData(offsetMinutes);
+            return marker;
         }
     }
 }

@@ -2,55 +2,60 @@ package ch.epfl.rechor;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-public sealed interface Json permits Json.JArray, Json.JObject, Json.JString, Json.JNumber {
+/**
+ * Represents a JSON value: array, object, string, or number.
+ */
+public sealed interface Json {
 
-    // Represents a JSON array
+    /**
+     * JSON array value.
+     *
+     * @param elements the elements of the JSON array
+     */
     record JArray(List<Json> elements) implements Json {
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append('[');
-            for (int i = 0; i < elements.size(); i++) {
-                if (i > 0) {
-                    sb.append(',');
-                }
-                sb.append(elements.get(i).toString());
-            }
-            sb.append(']');
-            return sb.toString();
+            String content = elements.stream()
+                    .map(Json::toString)
+                    .collect(Collectors.joining(","));
+            return "[" + content + "]";
         }
     }
 
-    // Represents a JSON object
+    /**
+     * JSON object value.
+     *
+     * @param members mapping of JSON object keys to values
+     */
     record JObject(Map<String, Json> members) implements Json {
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append('{');
-            boolean first = true;
-            for (Map.Entry<String, Json> entry : members.entrySet()) {
-                if (!first) {
-                    sb.append(',');
-                }
-                first = false;
-                sb.append('"').append(entry.getKey()).append('"').append(':')
-                        .append(entry.getValue().toString());
-            }
-            sb.append('}');
-            return sb.toString();
+            String content = members.entrySet().stream()
+                    .map(entry -> '"' + entry.getKey() + "\":" + entry.getValue())
+                    .collect(Collectors.joining(","));
+            return "{" + content + "}";
         }
     }
 
-    // Represents a JSON string
-    record JString(String s) implements Json {
+    /**
+     * JSON string value.
+     *
+     * @param text the string content (unescaped)
+     */
+    record JString(String text) implements Json {
         @Override
         public String toString() {
-            return "\"" + s + "\"";
+            return "\"" + text + "\"";
         }
     }
 
-    // Represents a JSON number
+    /**
+     * JSON number value.
+     *
+     * @param value the numeric value
+     */
     record JNumber(double value) implements Json {
         @Override
         public String toString() {

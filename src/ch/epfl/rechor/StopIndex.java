@@ -5,108 +5,52 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static java.lang.Character.isLetter;
 import static java.util.Objects.requireNonNull;
 
 /**
  * Immutable index of stop names supporting search with sub-queries.
- * <p>
- * Indexes main stop names and their alternatives, and returns matching mains sorted by descending
- * relevance based on coverage and word boundaries.
- * </p>
+ * Indexes primary names and their alternatives, returning matches
+ * sorted by relevance (coverage and word boundaries).
  */
 public final class StopIndex {
-
-    private static final Map<Character, String> ACCENT_EXPANSIONS = Map.of(
+    private static final Map<Character, String> ACCENT_MAP = Map.of(
             'c', "cç",
-            'a', "aáàâä",
-            'e', "eéèêë",
-            'i', "iíìîï",
-            'o', "oóòôö",
-            'u', "uúùûü"
+            'a', "aàáâä",
+            'e', "eèéêë",
+            'i', "iìíîï",
+            'o', "oòóôö",
+            'u', "uùúûü"
     );
 
-    private final Map<String, Set<String>> index;
+    private final Map<String, Set<String>> stops;
 
     /**
-     * Constructs the index from main stops and their alternative names.
-     *
-     * @param mainStops the list of primary stop names
-     * @param altNames  map of alternative name -> primary name
-     * @throws NullPointerException if any argument or contained value is null
+     * Builds an immutable stop index.
+     * @param mainStops list of primary stop names
+     * @param altNames  mapping of alternative names to primary names
+     * @throws NullPointerException if arguments or entries are null
      */
     public StopIndex(List<String> mainStops, Map<String, String> altNames) {
         requireNonNull(mainStops, "mainStops");
         requireNonNull(altNames, "altNames");
-
-        Map<String, Set<String>> tmp = new HashMap<>();
-        // include each main stop
-        mainStops.forEach(main -> {
+        Map<String, Set<String>> map = new HashMap<>();
+        for (String main : mainStops) {
             requireNonNull(main, "stop name");
-            tmp.put(main, new HashSet<>(List.of(main)));
-        });
-        // map alternatives to their main
-        altNames.forEach((alt, main) -> {
-            requireNonNull(alt, "alt name");
-            requireNonNull(main, "main name");
-            tmp.computeIfAbsent(main, _ -> new HashSet<>(List.of(main)))
-                    .add(alt);
-        });
-        this.index = Collections.unmodifiableMap(tmp);
-    }
-
-    // build a regex for one sub-query, expanding accents and setting case flag
-    private static Pattern buildRegex(String sub, boolean caseInsensitive) {
-        StringBuilder sb = new StringBuilder();
-        for (char c : sub.toCharArray()) {
-            String exp = ACCENT_EXPANSIONS.get(Character.toLowerCase(c));
-            if (exp != null && !Character.isUpperCase(c)) {
-                sb.append('[').append(exp).append(']');
-            } else {
-                sb.append(Pattern.quote(Character.toString(c)));
-            }
+            map.put(main, new HashSet<>(List.of(main)));
         }
-        int flags = caseInsensitive ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
-        return Pattern.compile(sb.toString(), flags);
-    }
-
-    // compute total match score or -1 if any sub-query fails
-    private static int matchScore(String name, List<QueryInfo> subs) {
-        if (subs.isEmpty()) {
-            return 0;
+        for (Map.Entry<String, String> entry : altNames.entrySet()) {
+            String alt = requireNonNull(entry.getKey(), "alt name");
+            String main = requireNonNull(entry.getValue(), "main name");
+            map.computeIfAbsent(main, k -> new HashSet<>(List.of(main))).add(alt);
         }
-        return subs.stream().mapToInt(qi -> {
-                    Matcher m = qi.pattern().matcher(name);
-                    if (!m.find()) {
-                        return -1;
-                    }
-                    return computeSubScore(name, m.start(), m.end(), qi.length());
-                })
-                .reduce((a, b) -> (a < 0 || b < 0) ? -1 : a + b)
-                .orElse(-1);
-    }
-
-    // compute sub-score: base*4 at start of word, *2 at end of word
-    private static int computeSubScore(String name, int start, int end, int subQueryLen) {
-        int base = (subQueryLen * 100) / name.length();
-        int factor = 1;
-        if (start == 0 || !isLetter(name.charAt(start - 1))) {
-            factor *= 4;
-        }
-        if (end == name.length() || !isLetter(name.charAt(end))) {
-            factor *= 2;
-        }
-        return base * factor;
+        this.stops = Collections.unmodifiableMap(map);
     }
 
     /**
-     * Returns up to maxCount main stop names matching the query. Sub-queries are separated by
-     * whitespace; each must match in a synonym. Results sorted by relevance score descending, then
-     * name ascending.
-     *
-     * @param query    user search string
-     * @param maxCount maximum number of results
-     * @return list of matching main stop names
+     * Returns up to maxCount primary stop names matching the query.
+     * @param query    search string (sub-queries separated by whitespace)
+     * @param maxCount maximum number of results (must be ≥0)
+     * @return list of matching primary names, sorted by relevance, then name
      * @throws NullPointerException     if query is null
      * @throws IllegalArgumentException if maxCount is negative
      */
@@ -119,39 +63,81 @@ public final class StopIndex {
             return List.of();
         }
 
-
-        // split into non-empty sub-queries
-        List<QueryInfo> subQueries = Arrays.stream(query.trim().split("\\s+"))
-                .filter(p -> !p.isEmpty())
-                .map(p -> {
-                    boolean hasUpper = p.chars().anyMatch(Character::isUpperCase);
-                    Pattern pat = buildRegex(p, !hasUpper);
-                    return new QueryInfo(pat, p.length());
-                })
-                .collect(Collectors.toList());
-
-        // compute best score for each main name via its synonyms
-        return index.entrySet().stream()
-                .map(e -> {
-                    String main = e.getKey();
-                    int best = e.getValue().stream()
-                            .mapToInt(name -> matchScore(name, subQueries))
-                            .max()
-                            .orElse(-1);
-                    return new ScoredName(main, best);
-                })
-                .filter(sn -> sn.score >= 0)
-                .sorted(Comparator.comparingInt(ScoredName::score).reversed()
-                        .thenComparing(ScoredName::name)
-                )
-                .limit(maxCount)
-                .map(ScoredName::name)
+        List<String> terms = Arrays.stream(query.trim().split("\\s+"))
+                .filter(s -> !s.isBlank())
                 .toList();
+
+        List<Pattern> patterns = terms.stream()
+                .map(term -> Pattern.compile(
+                        buildRegex(term),
+                        hasUpper(term) ? 0 : Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE
+                ))
+                .toList();
+
+        return stops.entrySet().stream()
+                .map(e -> Map.entry(e.getKey(), scoreSet(e.getValue(), patterns)))
+                .filter(e -> e.getValue() >= 0)
+                .sorted(Comparator.<Map.Entry<String,Integer>>comparingInt(Map.Entry::getValue)
+                        .reversed()
+                        .thenComparing(Map.Entry::getKey))
+                .limit(maxCount)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
     }
 
-    // holds pattern and original sub-query length
-    private record QueryInfo(Pattern pattern, int length) {}
+    private static String buildRegex(String term) {
+        StringBuilder sb = new StringBuilder();
+        for (char c : term.toCharArray()) {
+            char lc = Character.toLowerCase(c);
+            String alt = ACCENT_MAP.get(lc);
+            if (alt != null && !Character.isUpperCase(c)) {
+                sb.append('[').append(alt).append(']');
+            } else {
+                sb.append(Pattern.quote(String.valueOf(c)));
+            }
+        }
+        return sb.toString();
+    }
 
-    // pairs a main name with its score
-    private record ScoredName(String name, int score) {}
+    private static boolean hasUpper(String s) {
+        for (char c : s.toCharArray()) {
+            if (Character.isUpperCase(c)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int scoreSet(Set<String> names, List<Pattern> patterns) {
+        int best = -1;
+        for (String name : names) {
+            int sc = scoreName(name, patterns);
+            if (sc > best) {
+                best = sc;
+            }
+        }
+        return best;
+    }
+
+    private static int scoreName(String name, List<Pattern> patterns) {
+        int total = 0;
+        for (Pattern pat : patterns) {
+            Matcher m = pat.matcher(name);
+            if (!m.find()) {
+                return -1;
+            }
+            int start = m.start();
+            int end = m.end();
+            int base = (end - start) * 100 / name.length();
+            int factor = 1;
+            if (start == 0 || !Character.isLetter(name.charAt(start - 1))) {
+                factor *= 4;
+            }
+            if (end == name.length() || !Character.isLetter(name.charAt(end))) {
+                factor *= 2;
+            }
+            total += base * factor;
+        }
+        return total;
+    }
 }

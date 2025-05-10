@@ -3,8 +3,8 @@ package ch.epfl.rechor.gui;
 import ch.epfl.rechor.StopIndex;
 import ch.epfl.rechor.journey.Journey;
 import ch.epfl.rechor.journey.JourneyExtractor;
-import ch.epfl.rechor.journey.Router;
 import ch.epfl.rechor.journey.Profile;
+import ch.epfl.rechor.journey.Router;
 import ch.epfl.rechor.timetable.StationAliases;
 import ch.epfl.rechor.timetable.Stations;
 import ch.epfl.rechor.timetable.TimeTable;
@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Main application class that composes the query, summary, and detail UIs
- * and wires them together to provide an interactive journey search interface.
+ * Main application class that composes the query, summary, and detail UIs and wires them together
+ * to provide an interactive journey search interface.
  */
 public class Main extends Application {
 
@@ -38,7 +38,6 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        // Load timetable from the "timetable" subfolder in the working directory
         TimeTable timeTable = FileTimeTable.in(Path.of("timetable"));
 
         // Build stop index from station names and aliases
@@ -56,7 +55,6 @@ public class Main extends Application {
         }
         StopIndex index = new StopIndex(mainStops, altNames);
 
-        // Create the query UI
         QueryUI queryUI = QueryUI.create(index);
 
         // Precompute a name-to-ID map for station lookup

@@ -11,11 +11,10 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
-import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TitledPane;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -23,7 +22,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.stage.FileChooser;
 
-import java.awt.Desktop;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -158,7 +157,7 @@ public record DetailUI(Node rootNode) {
     private static Node buildButtonsBar(Journey journey) {
         HBox bar = new HBox();
         bar.setId("buttons");
-        bar.setAlignment(Pos.BASELINE_CENTER);
+        bar.setAlignment(Pos.BOTTOM_CENTER);
         Button map = new Button("Carte");
         map.setOnAction(e -> openGeoJsonMap(journey));
         Button cal = new Button("Calendrier");
@@ -228,7 +227,7 @@ public record DetailUI(Node rootNode) {
             for (Circle[] pair : connections) {
                 Point2D srt = pair[0].localToParent(pair[0].getCenterX(), pair[0].getCenterY());
                 Point2D end = pair[1].localToParent(pair[1].getCenterX(), pair[1].getCenterY());
-                Line line = new Line(srt.getX(), srt.getY()+4, end.getX(), end.getY()-4);
+                Line line = new Line(srt.getX(), srt.getY() + 4, end.getX(), end.getY() - 4);
                 line.setStroke(Color.RED);
                 line.setStrokeWidth(2);
                 annotationPane.getChildren().add(line);

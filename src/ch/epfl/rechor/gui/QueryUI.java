@@ -1,6 +1,7 @@
 package ch.epfl.rechor.gui;
 
 import ch.epfl.rechor.StopIndex;
+import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
@@ -20,10 +21,10 @@ import java.time.format.DateTimeFormatter;
  */
 public record QueryUI(
         Node root,
-        javafx.beans.value.ObservableValue<String> depStopO,
-        javafx.beans.value.ObservableValue<String> arrStopO,
-        javafx.beans.value.ObservableValue<LocalDate> dateO,
-        javafx.beans.value.ObservableValue<LocalTime> timeO
+        ObservableValue<String> depStopO,
+        ObservableValue<String> arrStopO,
+        ObservableValue<LocalDate> dateO,
+        ObservableValue<LocalTime> timeO
 ) {
     /**
      * Creates the QueryUI record initialized with stop index bindings.

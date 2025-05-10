@@ -18,36 +18,34 @@ import java.util.List;
 /**
  * UI component combining a TextField and a Popup for searching and selecting stops.
  */
-public record StopField(TextField textField,
-                        ObservableValue<String> stopO) {
+public record StopField(TextField textField, ObservableValue<String> stopO) {
 
     /**
-     * Create a StopField bound to the given StopIndex.
+     * Creates a StopField bound to the given StopIndex.
      */
     public static StopField create(StopIndex index) {
         TextField textField = new TextField();
         StringProperty selectedStop = new SimpleStringProperty("");
 
-        Popup popup = new Popup();
-        popup.setHideOnEscape(false);
-
         ListView<String> listView = new ListView<>();
         listView.setFocusTraversable(false);
         listView.setMaxHeight(240);
+
+        Popup popup = new Popup();
+        popup.setHideOnEscape(false);
         popup.getContent().add(listView);
 
-        // Listener to update suggestions
-        ChangeListener<String> textListener = (obs, old, nw) -> {
-            List<String> results = index.stopsMatching(nw == null ? "" : nw, 30);
-            listView.getItems().setAll(results);
-            if (!results.isEmpty()) {
+        ChangeListener<String> queryListener = (obs, old, nw) -> {
+            List<String> matches = index.stopsMatching(nw == null ? "" : nw, 30);
+            listView.getItems().setAll(matches);
+            if (!matches.isEmpty()) {
                 listView.getSelectionModel().selectFirst();
                 listView.scrollTo(0);
             }
         };
 
-        // Reposition popup when field moves/resizes
-        ChangeListener<Bounds> boundsListener = (obs, oldB, newB) -> {
+        ChangeListener<Bounds> layoutListener = (obs,
+                                                 oldB, newB) -> {
             Bounds screen = textField.localToScreen(newB);
             if (screen != null) {
                 popup.setAnchorX(screen.getMinX());
@@ -55,65 +53,53 @@ public record StopField(TextField textField,
             }
         };
 
-        // Commit selection helper: only commit if a suggestion is selected; otherwise clear
-        Runnable commitSelection = () -> {
+        Runnable commit = () -> {
             String sel = listView.getSelectionModel().getSelectedItem();
-            if (sel != null && !sel.isBlank()) {
-                textField.setText(sel);
-                selectedStop.set(sel);
-            } else {
-                textField.setText("");
-                selectedStop.set("");
-            }
+            String val = (sel != null && !sel.isBlank()) ? sel : "";
+            textField.setText(val);
+            selectedStop.set(val);
             popup.hide();
         };
 
-        // Mouse click commits
-        listView.setOnMouseClicked(e -> commitSelection.run());
+        // Show popup and start listening when focused
+        textField.focusedProperty().addListener((obs,
+                                                 wasFocused, nowFocused) -> {
+            if (nowFocused) {
+                textField.textProperty().addListener(queryListener);
+                textField.boundsInLocalProperty().addListener(layoutListener);
+                Bounds b = textField.localToScreen(textField.getBoundsInLocal());
+                popup.show(textField, b.getMinX(), b.getMaxY());
+                queryListener.changed(null, null, textField.getText());
+            } else {
+                textField.textProperty().removeListener(queryListener);
+                textField.boundsInLocalProperty().removeListener(layoutListener);
+                commit.run();
+            }
+        });
 
-        // Arrow keys navigate suggestions without resetting
+        // Keyboard navigation
         textField.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             if (!popup.isShowing()) return;
             MultipleSelectionModel<String> selModel = listView.getSelectionModel();
-            if (event.getCode() == KeyCode.UP && selModel.getSelectedIndex() > 0) {
-                selModel.selectPrevious();
+            if ((event.getCode() == KeyCode.UP && selModel.getSelectedIndex() > 0) ||
+                    (event.getCode() == KeyCode.DOWN
+                            && selModel.getSelectedIndex() < listView.getItems().size() - 1)) {
+                if (event.getCode() == KeyCode.UP) selModel.selectPrevious();
+                else selModel.selectNext();
                 listView.scrollTo(selModel.getSelectedIndex());
                 String s = selModel.getSelectedItem();
                 if (s != null) {
-                    textField.textProperty().removeListener(textListener);
+                    textField.textProperty().removeListener(queryListener);
                     textField.setText(s);
                     textField.positionCaret(s.length());
-                    textField.textProperty().addListener(textListener);
-                }
-                event.consume();
-            } else if (event.getCode() == KeyCode.DOWN && selModel.getSelectedIndex() < listView.getItems().size() - 1) {
-                selModel.selectNext();
-                listView.scrollTo(selModel.getSelectedIndex());
-                String s = selModel.getSelectedItem();
-                if (s != null) {
-                    textField.textProperty().removeListener(textListener);
-                    textField.setText(s);
-                    textField.positionCaret(s.length());
-                    textField.textProperty().addListener(textListener);
+                    textField.textProperty().addListener(queryListener);
                 }
                 event.consume();
             }
         });
 
-        // Show/hide popup on focus changes
-        textField.focusedProperty().addListener((obs, wasFocused, nowFocused) -> {
-            if (nowFocused) {
-                Bounds b = textField.localToScreen(textField.getBoundsInLocal());
-                if (b != null) popup.show(textField, b.getMinX(), b.getMaxY());
-                textField.textProperty().addListener(textListener);
-                textField.boundsInLocalProperty().addListener(boundsListener);
-                textListener.changed(null, null, textField.getText());
-            } else {
-                textField.textProperty().removeListener(textListener);
-                textField.boundsInLocalProperty().removeListener(boundsListener);
-                commitSelection.run();
-            }
-        });
+        // Mouse selection
+        listView.setOnMouseClicked(e -> commit.run());
 
         return new StopField(textField, selectedStop);
     }
