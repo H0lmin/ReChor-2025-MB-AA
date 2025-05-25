@@ -8,6 +8,17 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
+/**
+ * Utility for converting a {@link Journey} into its GeoJSON representation.
+ * <p>
+ * This class provides methods to generate a GeoJSON LineString feature
+ * from the sequence of stops in a journey. Coordinates are rounded to five
+ * decimal places and any consecutive duplicate points are omitted.
+ * </p>
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
+ */
 public final class JourneyGeoJsonConverter {
     private static final double COORDINATE_SCALE = 1e5;
 
@@ -48,7 +59,7 @@ public final class JourneyGeoJsonConverter {
         return getJson(stops);
     }
 
-    public static Json getJson(List<Stop> stops) {
+    private static Json getJson(List<Stop> stops) {
         // Build coordinates, skipping consecutive duplicates
         List<Json> coordinates = new ArrayList<>();
         double previousLon = 0, previousLat = 0;

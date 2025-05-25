@@ -11,6 +11,9 @@ import static java.util.Objects.requireNonNull;
  * Immutable index of stop names supporting search with sub-queries.
  * Indexes primary names and their alternatives, returning matches
  * sorted by relevance (coverage and word boundaries).
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
  */
 public final class StopIndex {
     private static final Map<Character, String> ACCENT_MAP = Map.of(
