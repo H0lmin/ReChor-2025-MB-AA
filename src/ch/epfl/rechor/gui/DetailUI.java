@@ -124,12 +124,10 @@ public record DetailUI(Node rootNode) {
         // Departure details
         Label depTime = new Label(FormatterFr.formatTime(tr.depTime()));
         depTime.getStyleClass().add("departure");
-        GridPane.setHalignment(depTime, HPos.RIGHT);
         Circle depCircle = circle();
         Label depStation = new Label(tr.depStop().name());
         Label depPlatform = new Label(FormatterFr.formatPlatformName(tr.depStop()));
         depPlatform.getStyleClass().add("departure");
-        GridPane.setHalignment(depPlatform, HPos.CENTER);
 
         grid.addRow(row++, depTime, depCircle, depStation, depPlatform);
 
@@ -153,11 +151,9 @@ public record DetailUI(Node rootNode) {
 
         // Arrival details
         Label arrTime = new Label(FormatterFr.formatTime(tr.arrTime()));
-        GridPane.setHalignment(arrTime, HPos.RIGHT);
         Circle arrCircle = circle();
         Label arrStation = new Label(tr.arrStop().name());
         Label arrPlatform = new Label(FormatterFr.formatPlatformName(tr.arrStop()));
-        GridPane.setHalignment(arrPlatform, HPos.CENTER);
 
         grid.addRow(row++, arrTime, arrCircle, arrStation, arrPlatform);
         grid.connect(depCircle, arrCircle);
@@ -188,7 +184,6 @@ public record DetailUI(Node rootNode) {
     private static Node buildButtonsBar(Journey journey) {
         HBox bar = new HBox();
         bar.setId("buttons");
-        bar.setAlignment(Pos.BOTTOM_CENTER);
 
         Button map = new Button("Carte");
         map.setOnAction(e -> openGeoJsonMap(journey));
@@ -248,8 +243,6 @@ public record DetailUI(Node rootNode) {
         iv.setFitWidth(ICON_SIZE);
         iv.setFitHeight(ICON_SIZE);
         iv.setPreserveRatio(true);
-        GridPane.setHalignment(iv, HPos.CENTER);
-        GridPane.setValignment(iv, VPos.CENTER);
         return iv;
     }
 

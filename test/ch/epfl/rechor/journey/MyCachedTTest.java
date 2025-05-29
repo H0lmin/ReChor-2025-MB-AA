@@ -39,7 +39,7 @@ public final class MyCachedTTest {
     public static void main(String[] args) throws IOException {
         long tStart = System.nanoTime();
 
-        TimeTable rawTimeTable = FileTimeTable.in(Path.of("timetable"));
+        TimeTable rawTimeTable = FileTimeTable.in(Path.of("timetable14"));
         TimeTable timeTable = new CachedTimeTable(rawTimeTable);
         Stations stations = timeTable.stations();
         LocalDate date = LocalDate.of(2025, Month.APRIL, 1);
@@ -47,7 +47,7 @@ public final class MyCachedTTest {
         int arrStationId = stationId(stations, "Gruyères");
         Router router = new Router(timeTable);
         try{
-            for (int i = arrStationId; i < arrStationId + 7 ; i++) {
+            for (int i = arrStationId; i < arrStationId + 1 ; i++) {
                 Profile profile = router.profile(date, arrStationId);
                 List<Journey> js = JourneyExtractor.journeys(profile, depStationId);
                 for (int l = 0; l < js.toArray().length; l++) {

@@ -114,19 +114,16 @@ public record SummaryUI(Node rootNode, ObservableValue<Journey> selectedJourneyO
 
             HBox routeRow = new HBox(iconView, routeLabel);
             routeRow.getStyleClass().add("route");
-            routeRow.setAlignment(Pos.CENTER_LEFT);
 
             HBox timeRow = new HBox(depTimeLabel, timelinePane, arrTimeLabel);
-            timeRow.setAlignment(Pos.CENTER_LEFT);
 
             HBox durationRow = new HBox(durationLabel);
-            durationRow.setAlignment(Pos.CENTER);
+            durationRow.getStyleClass().add("duration");
 
             cellBox = new VBox(routeRow, timeRow, durationRow);
             cellBox.getStyleClass().add("journey");
 
             depTimeLabel.getStyleClass().add("departure");
-            durationLabel.getStyleClass().add("duration");
 
             setGraphic(cellBox);
         }

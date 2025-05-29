@@ -19,7 +19,7 @@ public final class MyRouterTest {
     public static void main(String[] args) {
         try {
             TimeTable timeTable = new CachedTimeTable(
-                    FileTimeTable.in(Path.of("timetable1")));
+                    FileTimeTable.in(Path.of("timetable12")));
             LocalDate date = LocalDate.of(2025, 3, 18);
             Router router = new Router(timeTable);
             Stations stations = timeTable.stations();

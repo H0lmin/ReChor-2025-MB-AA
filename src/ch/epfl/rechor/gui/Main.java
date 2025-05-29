@@ -47,6 +47,24 @@ public final class Main extends Application {
         launch(args);
     }
 
+    /**
+     * Initializes and shows the main ReCHor application window.
+     * <p>
+     * This method performs the following steps:
+     * <ol>
+     *   <li>Loads the timetable data from the {@code timetable} folder on disk.</li>
+     *   <li>Builds a {@link ch.epfl.rechor.StopIndex} for stop-name lookups.</li>
+     *   <li>Creates the query panel via {@link QueryUI#create(StopIndex)}.</li>
+     *   <li>Constructs a binding of journeys to the current query parameters.</li>
+     *   <li>Creates the summary view ({@link SummaryUI}) and detail view ({@link DetailUI}).</li>
+     *   <li>Composes these UIs into a {@code BorderPane} with a {@code SplitPane} center.</li>
+     *   <li>Configures the primary {@link Stage}: sets scene, minimum size, title, and shows it.</li>
+     *   <li>After rendering, requests focus on the departure-stop text field.</li>
+     * </ol>
+     *
+     * @param primaryStage the main JavaFX {@link Stage} for this application
+     * @throws Exception if loading the timetable or initializing any UI component fails
+     */
     @Override
     public void start(final Stage primaryStage) throws Exception {
         TimeTable timeTable  = new CachedTimeTable(FileTimeTable.in(Path.of("timetable")));
@@ -70,7 +88,6 @@ public final class Main extends Application {
         primaryStage.setTitle("ReCHor");
         primaryStage.show();
 
-        // Focus departure field once scene is rendered
         Platform.runLater(() -> scene.lookup("#depStop").requestFocus());
     }
 

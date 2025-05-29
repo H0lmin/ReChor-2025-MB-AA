@@ -16,6 +16,8 @@ import javafx.stage.Popup;
 import java.util.List;
 import java.util.Objects;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * UI component combining a TextField and an attached Popup for searching and selecting stops from a
  * StopIndex.
@@ -39,7 +41,7 @@ public record StopField(TextField textField,
      * @throws NullPointerException if stopIndex is null
      */
     public static StopField create(StopIndex stopIndex) {
-        Objects.requireNonNull(stopIndex, "stopIndex");
+        requireNonNull(stopIndex, "stopIndex must not be null");
 
         TextField field = new TextField();
         StringProperty selectedStop = new SimpleStringProperty("");
@@ -67,7 +69,6 @@ public record StopField(TextField textField,
                 suggestionPopup);
         configureKeyBehavior(field, suggestionPopup, suggestionList, queryListener,
                 commitSelection);
-        suggestionList.setOnMouseClicked(e -> commitSelection.run());
 
         return new StopField(field, selectedStop);
     }

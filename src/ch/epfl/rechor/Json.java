@@ -6,6 +6,9 @@ import java.util.stream.Collectors;
 
 /**
  * Represents a JSON value: array, object, string, or number.
+ *
+ * @author Amine AMIRA (393410)
+ * @author Malak Berrada (379791)
  */
 public sealed interface Json {
 
